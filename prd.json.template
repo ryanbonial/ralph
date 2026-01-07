@@ -1,0 +1,149 @@
+{
+  "project": "Project Name",
+  "description": "Brief project description",
+  "features": [
+    {
+      "id": "001",
+      "type": "feature",
+      "category": "setup",
+      "priority": "critical",
+      "description": "Initialize project with package.json and basic dependencies",
+      "steps": [
+        "Create package.json with required dependencies",
+        "Set up TypeScript configuration",
+        "Create basic folder structure",
+        "Add linting and formatting tools",
+        "Verify build process works"
+      ],
+      "estimated_complexity": "small",
+      "depends_on": [],
+      "passes": false,
+      "iterations_taken": 0
+    },
+    {
+      "id": "002",
+      "type": "feature",
+      "category": "infrastructure",
+      "priority": "critical",
+      "description": "Set up development server and hot reload",
+      "steps": [
+        "Configure development server",
+        "Set up hot module replacement",
+        "Verify server starts correctly",
+        "Test that changes trigger reload"
+      ],
+      "estimated_complexity": "small",
+      "depends_on": ["001"],
+      "passes": false,
+      "iterations_taken": 0
+    },
+    {
+      "id": "003",
+      "type": "feature",
+      "category": "functional",
+      "priority": "high",
+      "description": "User can view the home page",
+      "steps": [
+        "Navigate to localhost:[port]",
+        "Verify page loads without errors",
+        "Check that basic UI elements render",
+        "Verify responsive design works",
+        "Test in multiple browsers"
+      ],
+      "estimated_complexity": "small",
+      "depends_on": ["002"],
+      "passes": false,
+      "iterations_taken": 0
+    },
+    {
+      "id": "004",
+      "type": "feature",
+      "category": "functional",
+      "priority": "high",
+      "description": "User can click button and see response",
+      "steps": [
+        "Locate the primary action button",
+        "Click the button",
+        "Verify expected response appears",
+        "Check that UI updates correctly",
+        "Test error handling"
+      ],
+      "estimated_complexity": "medium",
+      "depends_on": ["003"],
+      "passes": false,
+      "iterations_taken": 0
+    },
+    {
+      "id": "005",
+      "type": "feature",
+      "category": "functional",
+      "priority": "medium",
+      "description": "User can submit form with validation",
+      "steps": [
+        "Navigate to form",
+        "Enter invalid data and verify validation messages",
+        "Enter valid data and submit",
+        "Verify success feedback",
+        "Check that data is processed correctly"
+      ],
+      "estimated_complexity": "large",
+      "depends_on": ["003"],
+      "passes": false,
+      "iterations_taken": 0
+    },
+    {
+      "id": "006",
+      "type": "test",
+      "category": "testing",
+      "priority": "high",
+      "description": "Unit tests cover core business logic",
+      "steps": [
+        "Write tests for main functions",
+        "Verify edge cases are covered",
+        "Ensure tests pass",
+        "Check code coverage is adequate"
+      ],
+      "estimated_complexity": "medium",
+      "depends_on": ["004", "005"],
+      "passes": false,
+      "iterations_taken": 0
+    },
+    {
+      "id": "007",
+      "type": "refactor",
+      "category": "quality",
+      "priority": "medium",
+      "description": "Code passes type checking and linting",
+      "steps": [
+        "Run TypeScript compiler",
+        "Run ESLint or equivalent",
+        "Fix any type errors",
+        "Fix any linting issues",
+        "Verify CI passes"
+      ],
+      "estimated_complexity": "small",
+      "depends_on": [],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
+    }
+  ],
+  "schema_version": "2.0",
+  "notes": [
+    "Features should be atomic and testable",
+    "Each feature must have clear acceptance criteria",
+    "Only change 'passes' field when feature is fully verified",
+    "Never delete or modify feature descriptions",
+    "Add new features at the end if requirements change"
+  ],
+  "field_definitions": {
+    "type": "Type of work - 'feature' (new functionality), 'bug' (fix), 'refactor' (improve code), 'test' (add tests)",
+    "category": "Category - 'setup', 'infrastructure', 'functional', 'testing', 'quality', 'documentation'",
+    "priority": "Priority - 'critical', 'high', 'medium', 'low'",
+    "estimated_complexity": "Estimated size - 'small' (< 1hr), 'medium' (1-3hrs), 'large' (> 3hrs)",
+    "depends_on": "Array of feature IDs that must be completed before this one",
+    "passes": "Boolean - true when fully implemented and verified",
+    "iterations_taken": "Number of Ralph iterations needed to complete (tracked automatically)",
+    "blocked_reason": "String - if blocked, explain why (null if not blocked)"
+  }
+}

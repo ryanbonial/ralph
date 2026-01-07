@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# init.sh - Development Environment Initialization Script
+# This script is created by the initializer agent and used by coding agents
+# to quickly start the development environment for testing
+
+set -e
+
+# Colors for output
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+echo -e "${BLUE}Initializing development environment...${NC}"
+
+# Install dependencies if needed
+if [ ! -d "node_modules" ]; then
+    echo "Installing dependencies..."
+    pnpm install
+fi
+
+# Build if needed
+if [ -d "src" ] && [ ! -d "dist" ]; then
+    echo "Building project..."
+    pnpm build
+fi
+
+# Start development server in background
+echo "Starting development server..."
+
+# Example for Next.js
+# pnpm dev > dev.log 2>&1 &
+
+# Example for Vite
+# pnpm dev > dev.log 2>&1 &
+
+# Example for Node.js API
+# pnpm start > dev.log 2>&1 &
+
+# Store the PID for later cleanup
+echo $! > .dev-server.pid
+
+# Wait for server to be ready
+echo "Waiting for server to start..."
+sleep 3
+
+# Check if server is running
+# Example check for localhost:3000
+# if curl -s http://localhost:3000 > /dev/null; then
+#     echo -e "${GREEN}✓ Development server running${NC}"
+# else
+#     echo "Warning: Could not verify server is running"
+# fi
+
+echo -e "${GREEN}✓ Development environment ready${NC}"
+echo "Server logs: dev.log"
+echo "To stop: kill \$(cat .dev-server.pid)"
