@@ -38,6 +38,13 @@ AI_AGENT_MODE="${AI_AGENT_MODE:-claude}"
 # Example: AI_AGENT_CUSTOM_CMD="your-ai-tool --prompt-file"
 AI_AGENT_CUSTOM_CMD="${AI_AGENT_CUSTOM_CMD:-}"
 
+# Git Safety Configuration
+# Prevent commits to these branches (comma-separated)
+PROTECTED_BRANCHES="${PROTECTED_BRANCHES:-main,master}"
+
+# Allow git push to remote (default: false for safety)
+ALLOW_GIT_PUSH="${ALLOW_GIT_PUSH:-false}"
+
 # Error Recovery Configuration
 # Automatically rollback git commit if tests fail after implementation
 ROLLBACK_ON_FAILURE="${ROLLBACK_ON_FAILURE:-true}"
