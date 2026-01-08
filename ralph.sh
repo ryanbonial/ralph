@@ -17,6 +17,8 @@ PROGRESS_FILE="${PROGRESS_FILE:-.ralph/progress.txt}"
 PROTECTED_BRANCHES="${PROTECTED_BRANCHES:-main,master}"
 # Allow git push operations (default: false for safety)
 ALLOW_GIT_PUSH="${ALLOW_GIT_PUSH:-false}"
+# Auto-create feature branches when on protected branch (default: true)
+AUTO_CREATE_BRANCH="${AUTO_CREATE_BRANCH:-true}"
 
 # Run Mode Configuration
 # Set how the script executes iterations:
@@ -120,14 +122,176 @@ suggest_feature_branch() {
     echo ""
 }
 
+# Get next feature from PRD (highest priority incomplete feature with met dependencies)
+get_next_feature_from_prd() {
+    if [ ! -f "$PRD_FILE" ]; then
+        echo ""
+        return 1
+    fi
+
+    # Use Python to parse JSON and find next feature
+    python3 -c "
+import json
+import sys
+
+try:
+    with open('$PRD_FILE', 'r') as f:
+        prd = json.load(f)
+
+    features = prd.get('features', [])
+
+    # Priority order
+    priority_order = {'critical': 0, 'high': 1, 'medium': 2, 'low': 3}
+
+    # Filter to incomplete features with met dependencies
+    candidates = []
+    for feature in features:
+        if feature.get('passes', False):
+            continue
+        if feature.get('blocked_reason'):
+            continue
+
+        # Check dependencies
+        depends_on = feature.get('depends_on', [])
+        deps_met = True
+        for dep_id in depends_on:
+            dep_feature = next((f for f in features if f.get('id') == dep_id), None)
+            if not dep_feature or not dep_feature.get('passes', False):
+                deps_met = False
+                break
+
+        if deps_met:
+            candidates.append(feature)
+
+    if not candidates:
+        sys.exit(1)
+
+    # Sort by priority
+    candidates.sort(key=lambda f: (
+        priority_order.get(f.get('priority', 'low'), 99),
+        f.get('id', '')
+    ))
+
+    # Output first candidate as JSON
+    print(json.dumps(candidates[0]))
+except Exception as e:
+    sys.stderr.write(f'Error parsing PRD: {e}\n')
+    sys.exit(1)
+" 2>/dev/null
+}
+
+# Generate branch name from feature
+generate_branch_name() {
+    local feature_json="$1"
+
+    if [ -z "$feature_json" ]; then
+        # Fallback to generic name with timestamp
+        echo "feature/ralph-$(date +%Y%m%d-%H%M%S)"
+        return
+    fi
+
+    # Parse feature JSON
+    local feature_id=$(echo "$feature_json" | python3 -c "import json,sys; print(json.load(sys.stdin).get('id', ''))")
+    local feature_type=$(echo "$feature_json" | python3 -c "import json,sys; print(json.load(sys.stdin).get('type', 'feature'))")
+    local feature_desc=$(echo "$feature_json" | python3 -c "import json,sys; print(json.load(sys.stdin).get('description', ''))")
+
+    # Determine branch prefix based on type
+    local prefix="feature"
+    case "$feature_type" in
+        bug) prefix="bugfix" ;;
+        refactor) prefix="refactor" ;;
+        test) prefix="test" ;;
+        feature|*) prefix="feature" ;;
+    esac
+
+    # Create slug from description (first few words, lowercase, dashes)
+    local slug=$(echo "$feature_desc" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9 ]//g' | tr -s ' ' | cut -d' ' -f1-4 | tr ' ' '-')
+
+    # Construct branch name
+    if [ -n "$feature_id" ] && [ -n "$slug" ]; then
+        echo "${prefix}/${feature_id}-${slug}"
+    elif [ -n "$feature_id" ]; then
+        echo "${prefix}/${feature_id}"
+    else
+        echo "${prefix}/ralph-$(date +%Y%m%d-%H%M%S)"
+    fi
+}
+
+# Auto-create and checkout feature branch
+auto_create_feature_branch() {
+    local branch_name="$1"
+
+    if [ -z "$branch_name" ]; then
+        log_error "No branch name provided"
+        return 1
+    fi
+
+    log_info "Auto-creating feature branch: $branch_name"
+
+    if git show-ref --verify --quiet "refs/heads/$branch_name"; then
+        log_warning "Branch $branch_name already exists, checking out..."
+        git checkout "$branch_name"
+    else
+        log_info "Creating new branch from current HEAD..."
+        git checkout -b "$branch_name"
+    fi
+
+    log_success "Now on branch: $branch_name"
+    return 0
+}
+
 # Check prerequisites
 check_prerequisites() {
     log_info "Checking prerequisites..."
 
     # Check if on protected branch
     if is_protected_branch; then
-        suggest_feature_branch
-        exit 1
+        if [ "$AUTO_CREATE_BRANCH" = "true" ]; then
+            log_warning "Currently on protected branch: $(git rev-parse --abbrev-ref HEAD)"
+            echo ""
+
+            # Check if user provided custom branch name
+            if [ -n "$CUSTOM_BRANCH_NAME" ]; then
+                log_info "Using custom branch name: $CUSTOM_BRANCH_NAME"
+                auto_create_feature_branch "$CUSTOM_BRANCH_NAME" || {
+                    suggest_feature_branch
+                    exit 1
+                }
+            else
+                # Auto-detect next feature and create branch
+                log_info "AUTO_CREATE_BRANCH is enabled, inspecting PRD for next feature..."
+                local next_feature=$(get_next_feature_from_prd)
+
+                if [ -n "$next_feature" ]; then
+                    local feature_desc=$(echo "$next_feature" | python3 -c "import json,sys; print(json.load(sys.stdin).get('description', ''))")
+                    log_info "Next feature: $feature_desc"
+
+                    local branch_name=$(generate_branch_name "$next_feature")
+                    log_info "Generated branch name: $branch_name"
+                    echo ""
+
+                    auto_create_feature_branch "$branch_name" || {
+                        suggest_feature_branch
+                        exit 1
+                    }
+                else
+                    log_warning "Could not determine next feature from PRD"
+                    log_info "Creating generic feature branch..."
+                    local fallback_branch="feature/ralph-$(date +%Y%m%d-%H%M%S)"
+                    auto_create_feature_branch "$fallback_branch" || {
+                        suggest_feature_branch
+                        exit 1
+                    }
+                fi
+            fi
+
+            echo ""
+            log_success "Branch created successfully! Ready to run Ralph."
+            echo ""
+        else
+            suggest_feature_branch
+            exit 1
+        fi
     fi
 
     if [ ! -f "$AGENT_PROMPT_FILE" ]; then
@@ -543,6 +707,39 @@ execute_agent() {
 
 # Main execution
 main() {
+    # Parse command line arguments
+    CUSTOM_BRANCH_NAME=""
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --branch-name)
+                CUSTOM_BRANCH_NAME="$2"
+                shift 2
+                ;;
+            --help|-h)
+                echo "Ralph Wiggum Technique - Autonomous Coding Agent"
+                echo ""
+                echo "Usage: $0 [OPTIONS]"
+                echo ""
+                echo "Options:"
+                echo "  --branch-name NAME    Specify custom branch name for auto-creation"
+                echo "  --help, -h            Show this help message"
+                echo ""
+                echo "Environment Variables:"
+                echo "  RUN_MODE              'once' (default) or 'continuous'"
+                echo "  AUTO_CREATE_BRANCH    'true' (default) or 'false'"
+                echo "  PROTECTED_BRANCHES    Comma-separated list (default: 'main,master')"
+                echo "  ALLOW_GIT_PUSH        'true' or 'false' (default: false)"
+                echo ""
+                exit 0
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                echo "Use --help for usage information"
+                exit 1
+                ;;
+        esac
+    done
+
     echo ""
     echo "╔════════════════════════════════════════╗"
     echo "║   Ralph Wiggum Technique - Agent Loop  ║"

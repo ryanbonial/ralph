@@ -555,6 +555,70 @@ git checkout -b feature/add-authentication
 ./ralph.sh
 ```
 
+#### Auto-Branch Creation (New!)
+
+Ralph can automatically create feature branches when you run it on a protected branch (like `main` or `master`). This eliminates the manual step of creating branches!
+
+**How it works:**
+
+1. Run Ralph on a protected branch (e.g., `main`)
+2. Ralph inspects your PRD to find the next feature to implement
+3. Ralph auto-generates a branch name based on the feature type and description
+4. Ralph creates and switches to the new branch
+5. Ralph proceeds with the iteration
+
+**Branch naming convention:**
+
+- `feature/{id}-{slug}` - for type: "feature"
+- `bugfix/{id}-{slug}` - for type: "bug"
+- `refactor/{id}-{slug}` - for type: "refactor"
+- `test/{id}-{slug}` - for type: "test"
+
+Example: Feature `000a` with description "Auto-create feature branches..." becomes:
+```
+feature/000a-auto-create-feature-branches
+```
+
+**Usage:**
+
+```bash
+# Auto-create branch (enabled by default)
+cd /path/to/your/project
+git checkout main
+./ralph.sh
+# Ralph detects protected branch, inspects PRD, creates feature/000a-auto-create-feature-branches
+
+# Specify custom branch name
+./ralph.sh --branch-name my-custom-branch
+
+# Disable auto-creation (require manual branch creation)
+AUTO_CREATE_BRANCH=false ./ralph.sh
+
+# Help
+./ralph.sh --help
+```
+
+**Configuration:**
+
+```bash
+# Enable/disable auto-branch creation (default: true)
+AUTO_CREATE_BRANCH=true ./ralph.sh
+
+# Custom branch name via parameter
+./ralph.sh --branch-name feature/my-custom-feature
+
+# Works with other options
+RUN_MODE=continuous AUTO_CREATE_BRANCH=true ./ralph.sh
+```
+
+**Benefits:**
+
+- ✅ No more manually creating feature branches
+- ✅ Consistent branch naming across your project
+- ✅ Branch names match the feature being implemented
+- ✅ Safe to run Ralph on main - it automatically moves to a feature branch
+- ✅ Conventional branch prefixes (feature/, bugfix/, etc.) for better organization
+
 ### Combine Options
 
 ```bash

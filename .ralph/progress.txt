@@ -155,3 +155,43 @@ Notes for next iteration:
 - Features 001-009 are still available to implement
 - Recommended next: Feature 003 (Enhanced test strategy) or 006 (Config profiles)
 ---
+--- 2026-01-08 15:00 ---
+Feature: 000a - Auto-create feature branches when running Ralph on protected branches
+Status: Completed
+Type: feature
+Complexity: small
+
+Implementation:
+- Added AUTO_CREATE_BRANCH configuration to ralph.sh (default: true)
+- Implemented get_next_feature_from_prd() function using Python JSON parsing
+- Implemented generate_branch_name() function with type-based prefixes (feature/, bugfix/, refactor/, test/)
+- Implemented auto_create_feature_branch() function to create/checkout branches
+- Updated check_prerequisites() to auto-create branches when on protected branch
+- Added --branch-name parameter support for custom branch names
+- Added --help/-h parameter with usage documentation
+- Updated README.md with comprehensive Auto-Branch Creation section
+- Branch naming convention: {type}/{id}-{slug} where slug is first 4 words of description
+
+Key Files Modified:
+- ralph.sh: Added AUTO_CREATE_BRANCH config (line 21), added functions (lines 125-241), updated check_prerequisites() (lines 243-295), added argument parsing (lines 710-741)
+- README.md: Added Auto-Branch Creation section with examples, usage, and benefits (lines 558-620)
+- .ralph/prd.json: Marked feature 000a as complete with iterations_taken=1
+
+Testing:
+- Bash syntax validation passed: bash -n ralph.sh
+- Verified Python JSON parsing logic in get_next_feature_from_prd()
+- Verified branch name generation logic in generate_branch_name()
+- No package.json quality gates to run (bash-only project)
+
+Challenges:
+- None - implementation was straightforward
+- Used Python for JSON parsing instead of jq for better portability
+
+Notes for next iteration:
+- Feature 000a is now complete
+- Auto-branch creation solves the chicken-and-egg problem: can now run Ralph on main
+- Next high-priority feature: 001 (branch strategy) - but depends on 000a (now complete!)
+- Or: 003 (enhanced test strategy) - high priority, depends on 000 only
+- Feature 001 dependencies are now all met: ["000", "000a"]
+---
+
