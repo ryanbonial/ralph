@@ -316,6 +316,103 @@
       "passes": false,
       "iterations_taken": 0,
       "blocked_reason": null
+    },
+    {
+      "id": "013",
+      "type": "feature",
+      "category": "infrastructure",
+      "priority": "medium",
+      "description": "Add Sanity CMS schema for PRD storage",
+      "steps": [
+        "Create Sanity schema definition for PRD structure",
+        "Define document types for features, projects, and field definitions",
+        "Add validation rules matching current JSON schema",
+        "Create migration script from JSON to Sanity documents",
+        "Set up basic Sanity client configuration",
+        "Add SANITY_PROJECT_ID and SANITY_DATASET to ralph.sh config",
+        "Document Sanity setup in README"
+      ],
+      "estimated_complexity": "small",
+      "depends_on": [
+        "000"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
+    },
+    {
+      "id": "014",
+      "type": "feature",
+      "category": "infrastructure",
+      "priority": "medium",
+      "description": "Implement Sanity read/write operations for PRD",
+      "steps": [
+        "Add PRD_STORAGE configuration (file|sanity|hybrid)",
+        "Implement fetch_prd_from_sanity() function",
+        "Implement update_prd_in_sanity() function",
+        "Add caching layer for Sanity queries",
+        "Handle authentication with Sanity API tokens",
+        "Add error handling for network/API failures",
+        "Implement fallback to local file if Sanity unavailable",
+        "Add sync status tracking",
+        "Test round-trip read/write operations"
+      ],
+      "estimated_complexity": "medium",
+      "depends_on": [
+        "013"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
+    },
+    {
+      "id": "015",
+      "type": "feature",
+      "category": "infrastructure",
+      "priority": "low",
+      "description": "Add bi-directional sync between local PRD and Sanity",
+      "steps": [
+        "Implement conflict detection (local vs remote changes)",
+        "Add sync command (ralph.sh --sync)",
+        "Implement push changes to Sanity",
+        "Implement pull changes from Sanity",
+        "Add merge strategies (local-wins, remote-wins, manual)",
+        "Track last sync timestamp",
+        "Add sync status to progress log",
+        "Document sync workflows and conflict resolution"
+      ],
+      "estimated_complexity": "medium",
+      "depends_on": [
+        "014"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
+    },
+    {
+      "id": "016",
+      "type": "feature",
+      "category": "infrastructure",
+      "priority": "low",
+      "description": "Create Sanity Studio UI for PRD management",
+      "steps": [
+        "Set up Sanity Studio project structure",
+        "Create custom input components for PRD fields",
+        "Add visual dependency graph view",
+        "Implement drag-and-drop priority ordering",
+        "Add filtering and search capabilities",
+        "Create dashboard showing progress metrics",
+        "Add real-time collaboration indicators",
+        "Document Studio deployment options",
+        "Create screenshot examples for README"
+      ],
+      "estimated_complexity": "large",
+      "depends_on": [
+        "015"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
     }
   ],
   "notes": [
@@ -328,6 +425,8 @@
     "Feature 009 documents all the new features",
     "Feature 011 optimizes token usage by showing only failing tests",
     "Feature 012 adds sandboxed execution for enhanced security",
+    "Features 013-016 add Sanity CMS integration for PRD storage",
+    "Sanity integration is broken into 4 progressively complex features",
     "Start with features that have no dependencies",
     "Use human-in-the-loop mode for complex features",
     "Switch to continuous mode once confident with the patterns"
