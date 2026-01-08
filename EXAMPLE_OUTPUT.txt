@@ -391,7 +391,7 @@ You are part of a continuous loop. Your job is to:
 ⏺ I'll start by getting my bearings and understanding the current state of the project.
 
 ⏺ Bash(pwd)
-⎿  /Users/ryan.bonial/code/ralph
+⎿  $HOME/code/ralph
 
 ⏺ Read(.ralph/progress.txt)
 ⎿  Read 158 lines
@@ -407,7 +407,7 @@ You are part of a continuous loop. Your job is to:
 
 ⏺ Good! I can see:
 
-- Working directory: /Users/ryan.bonial/code/ralph
+- Working directory: $HOME/code/ralph
 - Current branch: feat/auto-branch-creation (from system info)
 - Recent work: Features 000 (git safety) and 010 (code quality checks) are complete
 - Latest PRD addition: Feature 000a was just added (auto-create feature branches)

@@ -6,7 +6,7 @@
 RALPH_DIR="$HOME/code/ralph"
 
 # You can also adjust paths here if needed:
-# RALPH_DIR="/Users/ryan.bonial/code/ralph"
+# RALPH_DIR="/path/to/your/ralph"
 
 # Run Ralph with the agent prompt from the toolkit
 AGENT_PROMPT_FILE="$RALPH_DIR/AGENT_PROMPT.md" \

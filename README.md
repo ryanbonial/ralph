@@ -45,7 +45,7 @@ cat > ralph-local.sh << 'EOF'
 #!/bin/bash
 # Wrapper to run Ralph with correct paths
 
-RALPH_DIR="/Users/ryan.bonial/code/ralph"
+RALPH_DIR="$HOME/code/ralph"
 AGENT_PROMPT_FILE="$RALPH_DIR/AGENT_PROMPT.md" \
   "$RALPH_DIR/ralph.sh" "$@"
 EOF
@@ -578,6 +578,7 @@ Ralph can automatically create feature branches when you run it on a protected b
 - `test/{id}-{slug}` - for type: "test"
 
 Example: Feature `000a` with description "Auto-create feature branches..." becomes:
+
 ```
 feature/000a-auto-create-feature-branches
 ```
