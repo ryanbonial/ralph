@@ -43,6 +43,36 @@
               └───────────────────────┘
 ```
 
+## 🎯 Setup: One Time Only
+
+### Set Up Ralph as Your Toolkit
+
+Ralph lives in a central location (e.g., `~/code/ralph`) and you reference it from your projects.
+
+**Option A: Create a wrapper script in each project**
+```bash
+# In your project directory
+cat > ralph-local.sh << 'EOF'
+#!/bin/bash
+RALPH_DIR="$HOME/code/ralph"  # Adjust path as needed
+AGENT_PROMPT_FILE="$RALPH_DIR/AGENT_PROMPT.md" \
+  "$RALPH_DIR/ralph.sh" "$@"
+EOF
+
+chmod +x ralph-local.sh
+```
+
+**Option B: Add to your shell profile (recommended)**
+```bash
+# Add to ~/.zshrc or ~/.bashrc
+export RALPH_DIR="$HOME/code/ralph"
+alias ralph="AGENT_PROMPT_FILE=$RALPH_DIR/AGENT_PROMPT.md $RALPH_DIR/ralph.sh"
+```
+
+With Option B, you can run `ralph` from any project!
+
+---
+
 ## 🎯 Three Simple Steps
 
 ### Step 1: Initialize (First Time Only)
@@ -277,7 +307,7 @@ mkdir -p .ralph
 echo ".ralph/" >> .gitignore
 
 # 2. Create prd.json manually
-cp prd.json.template .ralph/prd.json
+cp $RALPH_DIR/prd.json.template .ralph/prd.json
 # Edit .ralph/prd.json with your features
 
 # 3. Create progress log
@@ -286,15 +316,24 @@ echo "=== Progress Log ===" > .ralph/progress.txt
 # 4. (Optional) Create init.sh if needed
 # Most existing projects DON'T need this
 # Only create if you need automated dev server startup
-cp init.sh.template .ralph/init.sh
+cp $RALPH_DIR/init.sh.template .ralph/init.sh
 chmod +x .ralph/init.sh
 # Edit to match your project
 
 # 5. Initialize git
 git init && git add . && git commit -m "Initial commit"
 
-# 6. Start coding loop
-# Give AGENT_PROMPT.md to agent
+# 6. Create wrapper script (if not using global alias)
+cat > ralph-local.sh << 'EOF'
+#!/bin/bash
+RALPH_DIR="$HOME/code/ralph"
+AGENT_PROMPT_FILE="$RALPH_DIR/AGENT_PROMPT.md" \
+  "$RALPH_DIR/ralph.sh" "$@"
+EOF
+chmod +x ralph-local.sh
+
+# 7. Start coding loop
+./ralph-local.sh   # or just 'ralph' if using alias
 ```
 
 ### Checking Progress

@@ -1,0 +1,265 @@
+{
+  "project": "Ralph Wiggum Technique - Enhancements",
+  "description": "Using Ralph to improve Ralph - implementing advanced features for the Ralph Wiggum Technique",
+  "schema_version": "2.0",
+  "features": [
+    {
+      "id": "000",
+      "type": "feature",
+      "category": "infrastructure",
+      "priority": "critical",
+      "description": "Add git safety checks to prevent commits to main and accidental pushes",
+      "steps": [
+        "Add PROTECTED_BRANCHES configuration (default: main,master)",
+        "Add branch check before allowing commits",
+        "Prevent Ralph from operating on protected branches",
+        "Add ALLOW_GIT_PUSH configuration (default: false)",
+        "Block all git push operations unless explicitly enabled",
+        "Add helpful error messages when on wrong branch",
+        "Add suggestion to create feature branch",
+        "Test with main branch (should block)",
+        "Test with feature branch (should allow)",
+        "Document branch safety in README"
+      ],
+      "estimated_complexity": "small",
+      "depends_on": [],
+      "passes": true,
+      "iterations_taken": 1,
+      "blocked_reason": null
+    },
+    {
+      "id": "001",
+      "type": "feature",
+      "category": "infrastructure",
+      "priority": "high",
+      "description": "Add branch strategy for feature branches",
+      "steps": [
+        "Add BRANCH_STRATEGY configuration to ralph.sh (none|feature|pr)",
+        "Implement automatic branch creation per feature",
+        "Add branch naming convention (ralph/feature-{id}-{slug})",
+        "Implement automatic git checkout to feature branch",
+        "Add option to create PR automatically after feature completion",
+        "Test with github CLI integration",
+        "Update documentation with branch strategy examples"
+      ],
+      "estimated_complexity": "large",
+      "depends_on": [
+        "000"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
+    },
+    {
+      "id": "002",
+      "type": "feature",
+      "category": "infrastructure",
+      "priority": "medium",
+      "description": "Add support for parallel work streams",
+      "steps": [
+        "Design stream concept (separate PRD sections or files)",
+        "Add --stream parameter to ralph.sh",
+        "Implement stream filtering in feature selection",
+        "Add stream tags to prd.json schema",
+        "Create example multi-stream PRD",
+        "Document parallel workflow patterns",
+        "Add conflict detection between streams"
+      ],
+      "estimated_complexity": "large",
+      "depends_on": [
+        "000"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
+    },
+    {
+      "id": "003",
+      "type": "feature",
+      "category": "testing",
+      "priority": "high",
+      "description": "Enhanced test strategy with explicit acceptance criteria",
+      "steps": [
+        "Add acceptance_criteria object to PRD schema",
+        "Include unit_tests, e2e_tests, manual_checks arrays",
+        "Update AGENT_PROMPT to check acceptance criteria",
+        "Modify ralph.sh to verify specific test files exist and pass",
+        "Add test coverage reporting",
+        "Create template with acceptance criteria examples",
+        "Update INITIALIZER_PROMPT to generate acceptance criteria"
+      ],
+      "estimated_complexity": "medium",
+      "depends_on": [
+        "000"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
+    },
+    {
+      "id": "004",
+      "type": "feature",
+      "category": "infrastructure",
+      "priority": "medium",
+      "description": "CI/CD integration with GitHub Actions",
+      "steps": [
+        "Add WAIT_FOR_CI configuration option to ralph.sh",
+        "Implement GitHub Actions status check via gh CLI",
+        "Add automatic waiting for CI to complete",
+        "Implement auto-rollback if CI fails",
+        "Add CI status to progress log",
+        "Create example .github/workflows/ralph-ci.yml",
+        "Document CI integration patterns"
+      ],
+      "estimated_complexity": "medium",
+      "depends_on": [
+        "001"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
+    },
+    {
+      "id": "005",
+      "type": "feature",
+      "category": "quality",
+      "priority": "low",
+      "description": "Feature estimation tracking and analytics",
+      "steps": [
+        "Implement automatic tracking of actual vs estimated complexity",
+        "Add analytics command to ralph.sh (--stats)",
+        "Generate report of estimation accuracy",
+        "Track average iterations per complexity level",
+        "Identify frequently blocked features",
+        "Create visualization of progress over time",
+        "Add learning notes based on estimation patterns"
+      ],
+      "estimated_complexity": "medium",
+      "depends_on": [
+        "000"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
+    },
+    {
+      "id": "006",
+      "type": "feature",
+      "category": "infrastructure",
+      "priority": "low",
+      "description": "Ralph configuration profiles",
+      "steps": [
+        "Create .ralph/config.sh or .ralph/config.json format",
+        "Add support for loading configuration from file",
+        "Define default profiles (learning, production, fast)",
+        "Implement profile switching (--profile parameter)",
+        "Add profile inheritance and overrides",
+        "Create example profiles for common use cases",
+        "Document profile system in README"
+      ],
+      "estimated_complexity": "small",
+      "depends_on": [
+        "000"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
+    },
+    {
+      "id": "007",
+      "type": "refactor",
+      "category": "quality",
+      "priority": "medium",
+      "description": "Improve ralph.sh error handling and logging",
+      "steps": [
+        "Add structured logging with log levels (DEBUG, INFO, WARN, ERROR)",
+        "Implement LOG_FILE option for persistent logs",
+        "Add better error messages with suggestions",
+        "Implement graceful degradation for missing tools",
+        "Add --verbose and --quiet flags",
+        "Create troubleshooting guide based on common errors",
+        "Add health check command (ralph.sh --doctor)"
+      ],
+      "estimated_complexity": "medium",
+      "depends_on": [
+        "000"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
+    },
+    {
+      "id": "008",
+      "type": "test",
+      "category": "testing",
+      "priority": "high",
+      "description": "Create test suite for ralph.sh script",
+      "steps": [
+        "Set up bash testing framework (bats or similar)",
+        "Write tests for configuration loading",
+        "Write tests for feature selection logic",
+        "Write tests for error recovery and rollback",
+        "Write tests for dependency checking",
+        "Create mock PRD files for testing",
+        "Add CI workflow to run tests on changes"
+      ],
+      "estimated_complexity": "large",
+      "depends_on": [
+        "001",
+        "003"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
+    },
+    {
+      "id": "009",
+      "type": "feature",
+      "category": "documentation",
+      "priority": "high",
+      "description": "Update all documentation to explain new features",
+      "steps": [
+        "Update README.md with error recovery section",
+        "Document new PRD schema fields (type, depends_on, etc)",
+        "Add examples of dependency chains",
+        "Document rollback configuration options",
+        "Add troubleshooting section for common issues",
+        "Create migration guide from v1 to v2 schema",
+        "Update QUICK_REFERENCE with new field meanings"
+      ],
+      "estimated_complexity": "medium",
+      "depends_on": [
+        "001",
+        "002",
+        "003",
+        "004",
+        "005",
+        "006",
+        "007"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
+    }
+  ],
+  "notes": [
+    "This PRD uses Ralph to improve Ralph itself (meta!)",
+    "Features 001-006 implement the remaining improvements from the analysis",
+    "Feature 007 improves code quality of ralph.sh",
+    "Feature 008 adds proper testing infrastructure",
+    "Feature 009 documents all the new features",
+    "Start with features that have no dependencies",
+    "Use human-in-the-loop mode for complex features",
+    "Switch to continuous mode once confident with the patterns"
+  ],
+  "field_definitions": {
+    "type": "Type of work - 'feature' (new functionality), 'bug' (fix), 'refactor' (improve code), 'test' (add tests)",
+    "category": "Category - 'setup', 'infrastructure', 'functional', 'testing', 'quality', 'documentation'",
+    "priority": "Priority - 'critical', 'high', 'medium', 'low'",
+    "estimated_complexity": "Estimated size - 'small' (< 1hr), 'medium' (1-3hrs), 'large' (> 3hrs)",
+    "depends_on": "Array of feature IDs that must be completed before this one",
+    "passes": "Boolean - true when fully implemented and verified",
+    "iterations_taken": "Number of Ralph iterations needed to complete (tracked automatically)",
+    "blocked_reason": "String - if blocked, explain why (null if not blocked)"
+  }
+}

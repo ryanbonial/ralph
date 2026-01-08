@@ -4,6 +4,30 @@
 
 **ONE feature per iteration. Test thoroughly. Leave clean.**
 
+## 🚀 Quick Setup for New Projects
+
+```bash
+# In your project directory:
+# 1. Create wrapper script
+cat > ralph-local.sh << 'EOF'
+#!/bin/bash
+RALPH_DIR="$HOME/code/ralph"
+AGENT_PROMPT_FILE="$RALPH_DIR/AGENT_PROMPT.md" \
+  "$RALPH_DIR/ralph.sh" "$@"
+EOF
+chmod +x ralph-local.sh
+
+# 2. Create .ralph directory
+mkdir -p .ralph && echo ".ralph/" >> .gitignore
+
+# 3. Create PRD and progress
+cp $RALPH_DIR/prd.json.template .ralph/prd.json
+echo "=== Progress ===" > .ralph/progress.txt
+
+# 4. Run Ralph!
+./ralph-local.sh
+```
+
 ## 🔄 Run Modes
 
 **Human-in-the-Loop (Default):**

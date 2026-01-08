@@ -10,6 +10,7 @@ The Ralph Wiggum Technique enables AI coding agents to build complex application
 
 Based on:
 
+- [Matt Pocock's YouTube video: "Ship working code while you sleep with the Ralph Wiggum technique"](https://www.youtube.com/watch?v=_IK18goX4X8)
 - [Anthropic's research on long-running agent harnesses](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
 - [Geoffrey Huntley's Ralph Wiggum loop pattern](https://ghuntley.com/ralph/)
 
@@ -26,6 +27,43 @@ This kit contains everything you need:
 | `ralph.sh`                      | Bash script to orchestrate the agent loop  |
 | `init.sh.template`              | Example development environment script     |
 | `README.md`                     | This file - quick start guide              |
+
+## 📁 Using Ralph Across Multiple Projects
+
+Ralph lives in `/code/ralph` as your **toolkit directory**. To use it in other projects, create a wrapper script:
+
+```bash
+# In your project directory (e.g., ~/code/my-project/)
+# Create ralph-local.sh
+cat > ralph-local.sh << 'EOF'
+#!/bin/bash
+# Wrapper to run Ralph with correct paths
+
+RALPH_DIR="/Users/ryan.bonial/code/ralph"
+AGENT_PROMPT_FILE="$RALPH_DIR/AGENT_PROMPT.md" \
+  "$RALPH_DIR/ralph.sh" "$@"
+EOF
+
+chmod +x ralph-local.sh
+```
+
+Then run Ralph in your project:
+
+```bash
+./ralph-local.sh          # Human-in-the-loop mode
+RUN_MODE=continuous ./ralph-local.sh  # Continuous mode
+```
+
+**Or** add to your shell profile (`~/.zshrc` or `~/.bashrc`):
+
+```bash
+export RALPH_DIR="$HOME/code/ralph"
+alias ralph="AGENT_PROMPT_FILE=$RALPH_DIR/AGENT_PROMPT.md $RALPH_DIR/ralph.sh"
+```
+
+Then use `ralph` from any project directory!
+
+---
 
 ## 🚀 Quick Start
 
@@ -452,6 +490,7 @@ A well-running Ralph loop shows:
 
 ## 🎓 Learning Resources
 
+- [Matt Pocock: Ship working code while you sleep (YouTube)](https://www.youtube.com/watch?v=_IK18goX4X8) - Great video introduction to the Ralph technique
 - [Anthropic: Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
 - [Geoffrey Huntley: Ralph Wiggum as a "software engineer"](https://ghuntley.com/ralph/)
 - [Claude Agent SDK Documentation](https://docs.anthropic.com/en/docs/agents)
