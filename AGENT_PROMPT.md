@@ -151,18 +151,46 @@ Write clean, well-documented code:
 
 #### For All Code:
 
+**Quality Gate Checklist - ALL must pass before marking feature complete:**
+
 ```bash
-# Type checking
-npm run typecheck  # or tsc --noEmit, or pnpm typecheck
+# 1. Code formatting (if project uses prettier/black/gofmt)
+npm run format:check  # or prettier --check, or black --check
+# Auto-fix if needed: npm run format
 
-# Run test suite
-npm test  # or pnpm test, or pytest, etc.
+# 2. Linting (MUST pass - not optional)
+npm run lint  # or pnpm lint, or eslint, or pylint
+# Linting errors BLOCK completion - warnings should be addressed too
 
-# Linting
-npm run lint  # or pnpm lint
+# 3. Type checking (MUST pass if project uses TypeScript/types)
+npm run typecheck  # or tsc --noEmit, or pnpm typecheck, or mypy
+
+# 4. Test suite (MUST pass)
+npm test  # or pnpm test, or pytest, or cargo test
 ```
 
-**DO NOT mark a feature as passing without thorough testing.**
+**CRITICAL - Quality Gates:**
+
+1. **Formatting**: Code must be properly formatted according to project standards
+   - If prettier/black/gofmt exists in project, formatting MUST pass
+   - Fix formatting issues before marking complete
+
+2. **Linting**: All linting errors MUST be resolved
+   - Linting is NOT optional - errors block completion
+   - Warnings should be addressed when possible
+   - Do not disable lint rules without good reason
+
+3. **Type Safety**: Type checking MUST pass (if applicable)
+   - TypeScript projects: zero type errors required
+   - Python with type hints: mypy must pass
+   - Other typed languages: type checker must pass
+
+4. **Tests**: All tests MUST pass
+   - Existing tests must not break
+   - New functionality should have tests
+   - Edge cases should be covered
+
+**DO NOT mark a feature as passing without ALL quality checks passing.**
 
 ### 7. Update Feature Status
 
@@ -260,15 +288,17 @@ PROMISE COMPLETE
 - ✅ Work on ONE feature per iteration
 - ✅ Start by verifying existing functionality
 - ✅ Test thoroughly before marking complete
+- ✅ **Run ALL quality gates: formatting, linting, type checking, tests**
+- ✅ **Ensure linting and type checking PASS (not just warnings)**
 - ✅ Leave code in a clean, working state
 - ✅ Write clear progress notes
 - ✅ Make descriptive git commits
 - ✅ Use browser automation for UI testing
-- ✅ Run type checking and linters
 
 ### DO NOT:
 
 - ❌ Work on multiple features at once
+- ❌ **Mark features complete with failing quality checks (linting, formatting, types, tests)**
 - ❌ Mark features complete without testing
 - ❌ Select features with unmet dependencies (check `depends_on`)
 - ❌ Delete or modify feature descriptions/steps/dependencies in .ralph/prd.json
