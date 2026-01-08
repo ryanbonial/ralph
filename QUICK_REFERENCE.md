@@ -39,8 +39,14 @@ cat .ralph/prd.json                # What features remain?
 ### 2. Start Environment
 
 ```bash
+# If .ralph/init.sh exists:
 ./.ralph/init.sh             # Start dev server
+
+# Otherwise use standard project commands:
+npm run dev                  # or pnpm dev, etc.
 ```
+
+**Note:** `.ralph/init.sh` is optional for existing projects.
 
 ### 3. Test Existing Functionality
 

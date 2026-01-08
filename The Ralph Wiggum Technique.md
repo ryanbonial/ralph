@@ -28,9 +28,9 @@ A plain text file where agents document their work, decisions, and learnings.
 
 The reusable prompt given to the AI agent each iteration.
 
-### 4. Initialization Script (`.ralph/init.sh`)
+### 4. Initialization Script (`.ralph/init.sh`) - Optional
 
-A script that sets up and runs the development environment.
+A script that sets up and runs the development environment. Only needed for new projects or complex setups. Existing projects typically use standard npm/pnpm scripts instead.
 
 ### 5. Loop Script (`ralph.sh`)
 
@@ -118,8 +118,9 @@ See the companion files in this directory:
 2. Add to gitignore: `echo ".ralph/" >> .gitignore`
 3. Manually create `.ralph/prd.json` with your feature list
 4. Create empty `.ralph/progress.txt`
-5. Ensure your project has git initialized
-6. Start the Ralph loop:
+5. (Optional) Create `.ralph/init.sh` only if needed - most projects can skip this
+6. Ensure your project has git initialized
+7. Start the Ralph loop:
    - Human-in-the-loop: `./ralph.sh`
    - Continuous mode: `RUN_MODE=continuous ./ralph.sh`
 

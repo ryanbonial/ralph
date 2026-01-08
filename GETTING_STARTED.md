@@ -73,7 +73,7 @@
 - `.ralph/` directory (gitignored)
 - `.ralph/prd.json` - Complete feature list
 - `.ralph/progress.txt` - Progress log
-- `.ralph/init.sh` - Dev environment script
+- `.ralph/init.sh` - Dev environment script (for new projects)
 - Full project structure with dependencies
 
 ### Step 2: Implement Features (Repeat Until Done)
@@ -283,10 +283,17 @@ cp prd.json.template .ralph/prd.json
 # 3. Create progress log
 echo "=== Progress Log ===" > .ralph/progress.txt
 
-# 4. Initialize git
+# 4. (Optional) Create init.sh if needed
+# Most existing projects DON'T need this
+# Only create if you need automated dev server startup
+cp init.sh.template .ralph/init.sh
+chmod +x .ralph/init.sh
+# Edit to match your project
+
+# 5. Initialize git
 git init && git add . && git commit -m "Initial commit"
 
-# 5. Start coding loop
+# 6. Start coding loop
 # Give AGENT_PROMPT.md to agent
 ```
 
@@ -319,6 +326,9 @@ A: Break it down into smaller features in `.ralph/prd.json`.
 
 **Q: Can I modify features during development?**
 A: Yes, but only add new ones or update descriptions. Don't delete.
+
+**Q: Do I need to create `.ralph/init.sh` for my existing project?**
+A: No, it's optional. Only create it if you need automated dev server startup. The agent can use your existing npm/pnpm scripts.
 
 **Q: Will my Ralph files get committed to git?**
 A: No, the `.ralph/` directory is automatically added to `.gitignore` by the initializer.

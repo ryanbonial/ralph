@@ -80,13 +80,24 @@ This kit contains everything you need:
    echo "=== Ralph Wiggum Progress Log ===" > .ralph/progress.txt
    echo "Started: $(date)" >> .ralph/progress.txt
    ```
-4. **Ensure git is initialized**:
+4. **(Optional) Create `.ralph/init.sh`** if you need automated dev server startup:
+
+   ```bash
+   # Copy and adapt the template
+   cp init.sh.template .ralph/init.sh
+   chmod +x .ralph/init.sh
+   # Edit to match your project's needs
+   ```
+
+   **Note:** Most existing projects don't need this - the agent can use your existing npm/pnpm scripts.
+
+5. **Ensure git is initialized**:
    ```bash
    git init
    git add .
    git commit -m "Initial commit"
    ```
-5. **Start the loop**:
+6. **Start the loop**:
 
    ```bash
    # Human-in-the-loop (one iteration at a time)
@@ -174,11 +185,13 @@ This kit contains everything you need:
 - What decisions were made
 - What's next
 
-**`.ralph/init.sh`** - Quick Environment Setup
+**`.ralph/init.sh`** - Quick Environment Setup (Optional)
 
 - Installs dependencies
 - Starts dev server
 - Used by agent to test features
+- **Only needed for new projects or complex setups**
+- Existing projects can use standard npm/pnpm scripts instead
 
 **Note:** All Ralph workflow files are stored in `.ralph/` directory which is gitignored to prevent accidental commits.
 

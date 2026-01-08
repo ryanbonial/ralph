@@ -37,20 +37,35 @@ cat .ralph/prd.json
 
 ### 2. Verify Existing Functionality
 
-Before implementing anything new:
+Before implementing anything new, verify core functionality still works:
+
+**If `.ralph/init.sh` exists:**
 
 ```bash
 # Start the development environment
 ./.ralph/init.sh
 ```
 
-Then verify core functionality still works:
+**Otherwise, use standard project commands:**
+
+```bash
+# Examples (use what's appropriate for this project):
+npm run dev
+# or
+pnpm dev
+# or
+python manage.py runserver
+```
+
+Then verify:
 
 - For web apps: Use browser automation to test basic user flows
 - For APIs: Test key endpoints with curl or automated tests
 - For libraries: Run the test suite
 
 **If anything is broken, fix it immediately before proceeding.**
+
+**Note:** `.ralph/init.sh` is optional. Many projects work fine with standard npm/pnpm scripts.
 
 ### 3. Select ONE Feature to Implement
 
