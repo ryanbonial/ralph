@@ -438,6 +438,28 @@
       "passes": false,
       "iterations_taken": 0,
       "blocked_reason": null
+    },
+    {
+      "id": "017",
+      "type": "bug",
+      "category": "quality",
+      "priority": "critical",
+      "description": "Prevent agent from continuing to next feature in same context window",
+      "steps": [
+        "Update AGENT_PROMPT.md to explicitly forbid moving to next feature",
+        "Add clear instruction: 'STOP after completing ONE feature'",
+        "Remove any language suggesting the agent should continue",
+        "Add explicit boundary: 'Your work is complete. Exit now.'",
+        "Emphasize that continuing defeats Ralph's incremental approach",
+        "Add warning about context window contamination",
+        "Test that agents actually stop after one feature",
+        "Document the one-feature-per-context philosophy in README"
+      ],
+      "estimated_complexity": "small",
+      "depends_on": [],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
     }
   ],
   "notes": [
@@ -445,6 +467,7 @@
     "Feature 000a solves chicken-and-egg: auto-create branches so you can run Ralph on main (CRITICAL)",
     "Feature 000 implements git safety checks (COMPLETE)",
     "Feature 010 ensures code quality gates (lint/prettier/typescript) are enforced (COMPLETE)",
+    "Feature 017 prevents agents from continuing to next feature (CRITICAL - breaks Ralph philosophy)",
     "Features 001-006 implement the remaining improvements from the analysis",
     "Feature 007 improves code quality of ralph.sh",
     "Feature 008 adds proper testing infrastructure",
