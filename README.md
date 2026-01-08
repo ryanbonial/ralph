@@ -8,6 +8,8 @@ A complete, ready-to-use system for autonomous, incremental software development
 
 The Ralph Wiggum Technique enables AI coding agents to build complex applications systematically across multiple sessions/context windows. Instead of trying to build everything at once, the agent works on ONE feature at a time, tests it thoroughly, and leaves clear documentation for the next session.
 
+**👀 Want to see it in action?** Check out [`EXAMPLE_OUTPUT.txt`](EXAMPLE_OUTPUT.txt) for a complete real-world iteration showing Ralph selecting a feature, implementing it, and committing changes.
+
 Based on:
 
 - [Matt Pocock's YouTube video: "Ship working code while you sleep with the Ralph Wiggum technique"](https://www.youtube.com/watch?v=_IK18goX4X8)
@@ -21,15 +23,16 @@ Based on:
 
 This kit contains everything you need:
 
-| File                            | Purpose                                    |
-| ------------------------------- | ------------------------------------------ |
-| `The Ralph Wiggum Technique.md` | Comprehensive explanation of the technique |
-| `AGENT_PROMPT.md`               | **Ready-to-use prompt for coding agents**  |
-| `INITIALIZER_PROMPT.md`         | **Prompt for first-time project setup**    |
-| `prd.json.template`             | Example feature list structure             |
-| `ralph.sh`                      | Bash script to orchestrate the agent loop  |
-| `init.sh.template`              | Example development environment script     |
-| `README.md`                     | This file - quick start guide              |
+| File                            | Purpose                                        |
+| ------------------------------- | ---------------------------------------------- |
+| `The Ralph Wiggum Technique.md` | Comprehensive explanation of the technique     |
+| `AGENT_PROMPT.md`               | **Ready-to-use prompt for coding agents**      |
+| `INITIALIZER_PROMPT.md`         | **Prompt for first-time project setup**        |
+| `prd.json.template`             | Example feature list structure                 |
+| `ralph.sh`                      | Bash script to orchestrate the agent loop      |
+| `init.sh.template`              | Example development environment script         |
+| `EXAMPLE_OUTPUT.txt`            | **Real example of a complete Ralph iteration** |
+| `README.md`                     | This file - quick start guide                  |
 
 ## 📁 Using Ralph Across Multiple Projects
 
@@ -588,6 +591,7 @@ A well-running Ralph loop shows:
 
 ## 🎓 Learning Resources
 
+- **[EXAMPLE_OUTPUT.txt](EXAMPLE_OUTPUT.txt)** - See a real Ralph iteration from start to finish (feature selection, implementation, testing, commit)
 - [Matt Pocock: Ship working code while you sleep (YouTube)](https://www.youtube.com/watch?v=_IK18goX4X8) - Great video introduction to the Ralph technique
 - [Dex & Geoffrey Huntley: Ralph Wiggum Methodology Deep Dive (YouTube)](https://www.youtube.com/watch?v=SB6cO97tfiY) - Technical comparison of bash-loop vs plugin approaches, context engineering, and security considerations
 - [Anthropic: Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
