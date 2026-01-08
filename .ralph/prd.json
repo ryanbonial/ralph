@@ -4,6 +4,30 @@
   "schema_version": "2.0",
   "features": [
     {
+      "id": "000a",
+      "type": "feature",
+      "category": "infrastructure",
+      "priority": "critical",
+      "description": "Auto-create feature branches when running Ralph on protected branches",
+      "steps": [
+        "Add AUTO_CREATE_BRANCH configuration (default: true)",
+        "When on protected branch, inspect PRD to select next feature",
+        "Auto-create branch using conventional naming: feature/{id}-{slug}, bugfix/{id}-{slug}, etc.",
+        "Use PRD 'type' field to determine prefix (feature/, bugfix/, refactor/, chore/)",
+        "Fallback to feature/{timestamp} if type unknown or generic work",
+        "Switch to new branch before running agent",
+        "Show user what branch was created and why",
+        "Add --branch-name parameter to override auto-generated name",
+        "Document the workflow in README with examples",
+        "Test: run on main, verify branch created with correct prefix, verify work proceeds"
+      ],
+      "estimated_complexity": "small",
+      "depends_on": [],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
+    },
+    {
       "id": "000",
       "type": "feature",
       "category": "infrastructure",
@@ -44,7 +68,8 @@
       ],
       "estimated_complexity": "large",
       "depends_on": [
-        "000"
+        "000",
+        "000a"
       ],
       "passes": false,
       "iterations_taken": 0,
@@ -417,6 +442,7 @@
   ],
   "notes": [
     "This PRD uses Ralph to improve Ralph itself (meta!)",
+    "Feature 000a solves chicken-and-egg: auto-create branches so you can run Ralph on main (CRITICAL)",
     "Feature 000 implements git safety checks (COMPLETE)",
     "Feature 010 ensures code quality gates (lint/prettier/typescript) are enforced (COMPLETE)",
     "Features 001-006 implement the remaining improvements from the analysis",
