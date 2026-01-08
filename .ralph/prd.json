@@ -265,16 +265,69 @@
       "passes": true,
       "iterations_taken": 1,
       "blocked_reason": null
+    },
+    {
+      "id": "011",
+      "type": "feature",
+      "category": "quality",
+      "priority": "high",
+      "description": "Optimize test output to only show failing tests to conserve tokens",
+      "steps": [
+        "Update run_verification_tests() to capture full test output",
+        "Parse test output to identify only failing tests",
+        "Display only failing test details in agent context",
+        "Show test summary statistics (passed/failed counts)",
+        "Add configuration option TEST_OUTPUT_MODE (full|failures|summary)",
+        "Implement for npm test, pnpm test, and common test runners",
+        "Add support for Jest, Vitest, Mocha output formats",
+        "Document token savings achieved",
+        "Add examples to README showing token optimization"
+      ],
+      "estimated_complexity": "medium",
+      "depends_on": [
+        "010"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
+    },
+    {
+      "id": "012",
+      "type": "feature",
+      "category": "infrastructure",
+      "priority": "medium",
+      "description": "Add sandboxed execution mode for enhanced security",
+      "steps": [
+        "Research container/VM isolation options (Docker, Firecracker, gVisor)",
+        "Add SANDBOX_MODE configuration option (none|docker|vm)",
+        "Implement Docker-based sandbox execution",
+        "Add permission restrictions and blast radius limiting",
+        "Configure network isolation options",
+        "Add file system access restrictions",
+        "Implement cleanup of sandbox environments after runs",
+        "Document security considerations and setup",
+        "Provide examples for GCP VM and Docker setups",
+        "Add warnings about running with full permissions"
+      ],
+      "estimated_complexity": "large",
+      "depends_on": [
+        "000"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
     }
   ],
   "notes": [
     "This PRD uses Ralph to improve Ralph itself (meta!)",
-    "Feature 010 ensures code quality gates (lint/prettier/typescript) are enforced",
+    "Feature 000 implements git safety checks (COMPLETE)",
+    "Feature 010 ensures code quality gates (lint/prettier/typescript) are enforced (COMPLETE)",
     "Features 001-006 implement the remaining improvements from the analysis",
     "Feature 007 improves code quality of ralph.sh",
     "Feature 008 adds proper testing infrastructure",
     "Feature 009 documents all the new features",
-    "Feature 010 ensures code quality gates (lint/prettier/typescript) are enforced",
+    "Feature 011 optimizes token usage by showing only failing tests",
+    "Feature 012 adds sandboxed execution for enhanced security",
     "Start with features that have no dependencies",
     "Use human-in-the-loop mode for complex features",
     "Switch to continuous mode once confident with the patterns"
