@@ -333,14 +333,109 @@ ROLLBACK_ON_FAILURE=true ./ralph.sh
 VERIFY_BEFORE_COMPLETE=true ./ralph.sh
 ```
 
-- Runs `npm run typecheck`, `npm test`, `npm run lint`
-- Only accepts commits if all tests pass
+- Runs code quality gates: formatting, linting, type checking, tests
+- Only accepts commits if all quality gates pass
+- See "Code Quality Gates" section below for details
 
 **Disable for manual control:**
 
 ```bash
 ROLLBACK_ON_FAILURE=false VERIFY_BEFORE_COMPLETE=false ./ralph.sh
 ```
+
+## 🎨 Code Quality Gates
+
+Ralph enforces strict code quality standards before marking features complete. When `VERIFY_BEFORE_COMPLETE=true` (default), the following checks run automatically:
+
+### Quality Gate 1: Code Formatting
+
+```bash
+# Auto-fix enabled by default
+AUTOFIX_PRETTIER=true ./ralph.sh
+```
+
+- Checks prettier/black/gofmt formatting
+- Auto-fixes formatting issues before verification (if enabled)
+- **Status**: Blocks completion if formatting fails
+- **Fix**: `npm run format` or `prettier --write .`
+
+### Quality Gate 2: Linting (BLOCKING)
+
+```bash
+# Runs automatically
+npm run lint
+```
+
+- Checks for code quality issues, bugs, style violations
+- **Status**: **ALWAYS BLOCKS** feature completion
+- Linting is NOT optional - errors must be fixed
+- **Fix**: Address linting errors before marking feature complete
+
+### Quality Gate 3: Type Checking (BLOCKING)
+
+```bash
+# Runs automatically if TypeScript detected
+npm run typecheck  # or tsc --noEmit
+```
+
+- Validates TypeScript types, Python type hints, etc.
+- **Status**: **ALWAYS BLOCKS** feature completion if configured
+- Zero type errors required
+- **Fix**: Resolve type errors before marking feature complete
+
+### Quality Gate 4: Test Suite (BLOCKING)
+
+```bash
+# Runs automatically if tests exist
+npm test
+```
+
+- Runs full test suite
+- **Status**: **ALWAYS BLOCKS** feature completion if tests fail
+- Existing tests must not break
+- New features should have test coverage
+- **Fix**: Fix failing tests before marking feature complete
+
+### Configuration Options
+
+```bash
+# Default: auto-fix prettier formatting before checks
+AUTOFIX_PRETTIER=true ./ralph.sh
+
+# Disable auto-fix (will still check formatting)
+AUTOFIX_PRETTIER=false ./ralph.sh
+
+# Disable all verification (not recommended)
+VERIFY_BEFORE_COMPLETE=false ./ralph.sh
+```
+
+### Quality Gate Results
+
+Ralph provides a clear summary after running checks:
+
+```
+Quality Gate Summary:
+  ✅ Formatting
+  ✅ Linting
+  ✅ Type Checking
+  ✅ Tests
+
+✅ ALL QUALITY GATES PASSED
+```
+
+Or if failures occur:
+
+```
+Quality Gate Summary:
+  ✅ Formatting
+  ❌ Linting
+  ❌ Type Checking
+  ✅ Tests
+
+❌ QUALITY GATES FAILED - Feature cannot be marked complete
+```
+
+**Important**: Features CANNOT be marked as `"passes": true` in `prd.json` until ALL quality gates pass.
 
 ## 📊 Feature Dependencies
 

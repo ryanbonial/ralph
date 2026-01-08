@@ -52,6 +52,10 @@ ROLLBACK_ON_FAILURE="${ROLLBACK_ON_FAILURE:-true}"
 # Run verification tests before accepting a feature as complete
 VERIFY_BEFORE_COMPLETE="${VERIFY_BEFORE_COMPLETE:-true}"
 
+# Code Quality Configuration
+# Automatically fix prettier formatting issues before verification
+AUTOFIX_PRETTIER="${AUTOFIX_PRETTIER:-true}"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -177,41 +181,135 @@ check_completion() {
 
 # Run verification tests
 run_verification_tests() {
-    log_info "Running verification tests..."
+    log_info "Running code quality gates..."
+    echo ""
 
     local tests_passed=true
+    local quality_gate_results=""
 
-    # Run type checking if available
-    if [ -f "package.json" ] && grep -q '"typecheck"' package.json; then
-        log_info "Running type check..."
-        if ! npm run typecheck 2>&1 | tee /tmp/ralph_typecheck.log; then
-            log_error "Type check failed"
-            tests_passed=false
+    # Gate 1: Code Formatting (Prettier/Black/etc)
+    if [ -f "package.json" ]; then
+        if grep -q '"format:check"' package.json || grep -q '"prettier"' package.json; then
+            log_info "🎨 Quality Gate 1/4: Code Formatting"
+
+            # Auto-fix if enabled
+            if [ "$AUTOFIX_PRETTIER" = "true" ]; then
+                if grep -q '"format"' package.json; then
+                    log_info "Auto-fixing formatting issues..."
+                    npm run format 2>&1 | tee /tmp/ralph_format.log || true
+                fi
+            fi
+
+            # Check formatting
+            if grep -q '"format:check"' package.json; then
+                if ! npm run format:check 2>&1 | tee /tmp/ralph_format_check.log; then
+                    log_error "❌ FAILED: Code formatting issues detected"
+                    log_info "Fix with: npm run format"
+                    quality_gate_results="${quality_gate_results}\n  ❌ Formatting"
+                    tests_passed=false
+                else
+                    log_success "✅ PASSED: Code formatting"
+                    quality_gate_results="${quality_gate_results}\n  ✅ Formatting"
+                fi
+            elif command -v prettier &> /dev/null; then
+                if ! prettier --check . 2>&1 | tee /tmp/ralph_prettier.log; then
+                    log_error "❌ FAILED: Prettier formatting issues detected"
+                    log_info "Fix with: prettier --write ."
+                    quality_gate_results="${quality_gate_results}\n  ❌ Formatting"
+                    tests_passed=false
+                else
+                    log_success "✅ PASSED: Prettier formatting"
+                    quality_gate_results="${quality_gate_results}\n  ✅ Formatting"
+                fi
+            else
+                log_info "⊘ SKIPPED: No formatting tool configured"
+                quality_gate_results="${quality_gate_results}\n  ⊘ Formatting (not configured)"
+            fi
+            echo ""
         fi
     fi
 
-    # Run tests if available
-    if [ -f "package.json" ] && grep -q '"test"' package.json; then
-        log_info "Running tests..."
-        if ! npm test 2>&1 | tee /tmp/ralph_test.log; then
-            log_error "Tests failed"
-            tests_passed=false
-        fi
-    fi
-
-    # Run linting if available
+    # Gate 2: Linting (MUST PASS - blocking)
+    log_info "🔍 Quality Gate 2/4: Linting"
     if [ -f "package.json" ] && grep -q '"lint"' package.json; then
-        log_info "Running linter..."
         if ! npm run lint 2>&1 | tee /tmp/ralph_lint.log; then
-            log_warning "Linting issues found (non-fatal)"
+            log_error "❌ FAILED: Linting errors detected (BLOCKING)"
+            log_info "Fix linting issues before marking feature complete"
+            quality_gate_results="${quality_gate_results}\n  ❌ Linting"
+            tests_passed=false
+        else
+            log_success "✅ PASSED: Linting"
+            quality_gate_results="${quality_gate_results}\n  ✅ Linting"
         fi
+    else
+        log_info "⊘ SKIPPED: No linting configured"
+        quality_gate_results="${quality_gate_results}\n  ⊘ Linting (not configured)"
     fi
+    echo ""
+
+    # Gate 3: Type Checking (MUST PASS if configured)
+    log_info "🔎 Quality Gate 3/4: Type Checking"
+    if [ -f "package.json" ] && grep -q '"typecheck"' package.json; then
+        if ! npm run typecheck 2>&1 | tee /tmp/ralph_typecheck.log; then
+            log_error "❌ FAILED: Type checking errors detected (BLOCKING)"
+            log_info "Fix type errors before marking feature complete"
+            quality_gate_results="${quality_gate_results}\n  ❌ Type Checking"
+            tests_passed=false
+        else
+            log_success "✅ PASSED: Type checking"
+            quality_gate_results="${quality_gate_results}\n  ✅ Type Checking"
+        fi
+    elif [ -f "tsconfig.json" ] || [ -f "package.json" ] && grep -q '"typescript"' package.json; then
+        if command -v tsc &> /dev/null; then
+            if ! tsc --noEmit 2>&1 | tee /tmp/ralph_tsc.log; then
+                log_error "❌ FAILED: TypeScript compilation errors (BLOCKING)"
+                quality_gate_results="${quality_gate_results}\n  ❌ Type Checking"
+                tests_passed=false
+            else
+                log_success "✅ PASSED: TypeScript"
+                quality_gate_results="${quality_gate_results}\n  ✅ Type Checking"
+            fi
+        else
+            log_info "⊘ SKIPPED: TypeScript found but tsc not available"
+            quality_gate_results="${quality_gate_results}\n  ⊘ Type Checking (tsc not found)"
+        fi
+    else
+        log_info "⊘ SKIPPED: No type checking configured"
+        quality_gate_results="${quality_gate_results}\n  ⊘ Type Checking (not configured)"
+    fi
+    echo ""
+
+    # Gate 4: Test Suite (MUST PASS if tests exist)
+    log_info "🧪 Quality Gate 4/4: Test Suite"
+    if [ -f "package.json" ] && grep -q '"test"' package.json; then
+        if ! npm test 2>&1 | tee /tmp/ralph_test.log; then
+            log_error "❌ FAILED: Test suite failed (BLOCKING)"
+            log_info "Fix failing tests before marking feature complete"
+            quality_gate_results="${quality_gate_results}\n  ❌ Tests"
+            tests_passed=false
+        else
+            log_success "✅ PASSED: Test suite"
+            quality_gate_results="${quality_gate_results}\n  ✅ Tests"
+        fi
+    else
+        log_info "⊘ SKIPPED: No tests configured"
+        quality_gate_results="${quality_gate_results}\n  ⊘ Tests (not configured)"
+    fi
+    echo ""
+
+    # Summary
+    echo "=========================================="
+    log_info "Quality Gate Summary:"
+    echo -e "$quality_gate_results"
+    echo "=========================================="
+    echo ""
 
     if [ "$tests_passed" = true ]; then
-        log_success "All verification tests passed"
+        log_success "✅ ALL QUALITY GATES PASSED"
         return 0
     else
-        log_error "Verification tests failed"
+        log_error "❌ QUALITY GATES FAILED - Feature cannot be marked complete"
+        log_warning "Fix the issues above and try again"
         return 1
     fi
 }
