@@ -11,6 +11,7 @@ The Ralph Wiggum Technique enables AI coding agents to build complex application
 Based on:
 
 - [Matt Pocock's YouTube video: "Ship working code while you sleep with the Ralph Wiggum technique"](https://www.youtube.com/watch?v=_IK18goX4X8)
+- [Dex & Geoffrey Huntley: "Ralph Wiggum Methodology - Bash Loop vs. Anthropic Plugin"](https://www.youtube.com/watch?v=SB6cO97tfiY) - Deep dive into deterministic bash-loop approach vs auto-compaction
 - [Anthropic's research on long-running agent harnesses](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
 - [Geoffrey Huntley's Ralph Wiggum loop pattern](https://ghuntley.com/ralph/)
 
@@ -588,6 +589,7 @@ A well-running Ralph loop shows:
 ## 🎓 Learning Resources
 
 - [Matt Pocock: Ship working code while you sleep (YouTube)](https://www.youtube.com/watch?v=_IK18goX4X8) - Great video introduction to the Ralph technique
+- [Dex & Geoffrey Huntley: Ralph Wiggum Methodology Deep Dive (YouTube)](https://www.youtube.com/watch?v=SB6cO97tfiY) - Technical comparison of bash-loop vs plugin approaches, context engineering, and security considerations
 - [Anthropic: Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
 - [Geoffrey Huntley: Ralph Wiggum as a "software engineer"](https://ghuntley.com/ralph/)
 - [Claude Agent SDK Documentation](https://docs.anthropic.com/en/docs/agents)
