@@ -240,14 +240,41 @@
       "passes": false,
       "iterations_taken": 0,
       "blocked_reason": null
+    },
+    {
+      "id": "010",
+      "type": "feature",
+      "category": "quality",
+      "priority": "critical",
+      "description": "Enhance code quality checks: ensure linting, prettier, and TypeScript pass before completion",
+      "steps": [
+        "Update AGENT_PROMPT.md to explicitly require lint/format/typecheck before marking complete",
+        "Add verification step checklist in agent prompt",
+        "Update run_verification_tests() in ralph.sh to check prettier formatting",
+        "Add option to auto-fix prettier issues (AUTOFIX_PRETTIER config)",
+        "Ensure TypeScript errors block feature completion",
+        "Make linting errors block completion (not just warnings)",
+        "Add clear error messages showing which quality check failed",
+        "Document the quality gate requirements in README",
+        "Test that features cannot be marked complete with quality issues"
+      ],
+      "estimated_complexity": "medium",
+      "depends_on": [
+        "000"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
     }
   ],
   "notes": [
     "This PRD uses Ralph to improve Ralph itself (meta!)",
+    "Feature 010 ensures code quality gates (lint/prettier/typescript) are enforced",
     "Features 001-006 implement the remaining improvements from the analysis",
     "Feature 007 improves code quality of ralph.sh",
     "Feature 008 adds proper testing infrastructure",
     "Feature 009 documents all the new features",
+    "Feature 010 ensures code quality gates (lint/prettier/typescript) are enforced",
     "Start with features that have no dependencies",
     "Use human-in-the-loop mode for complex features",
     "Switch to continuous mode once confident with the patterns"
