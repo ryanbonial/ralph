@@ -195,3 +195,53 @@ Notes for next iteration:
 - Feature 001 dependencies are now all met: ["000", "000a"]
 ---
 
+--- 2026-01-08 (Feature 017) ---
+Feature: 017 - Prevent agent from continuing to next feature in same context window
+Status: Completed
+Type: bug
+Complexity: small
+
+Implementation:
+- Updated AGENT_PROMPT.md "Critical Rules" section
+  * Added explicit DO: "STOP after completing ONE feature - your work is done"
+  * Added explicit DO NOT: "Continue to the next feature after completing one - STOP IMMEDIATELY"
+  * Added DO NOT: "Look at other features after finishing one - exit the context window"
+- Replaced "Context Window Management" section with "Your Work is Complete After ONE Feature"
+  * Added CRITICAL warning to STOP IMMEDIATELY after one feature
+  * Explained Ralph's philosophy: fresh context, verifiable progress, reduced errors, incremental safety
+  * Added explicit checklist of what to do/not do after git commit
+  * Renamed old section to "If You're Approaching Context Limits" for mid-work token issues
+- Updated "Remember" section to "Remember: One Feature, Then STOP"
+  * Emphasized each iteration is independent
+  * Added explicit instruction: "STOP and exit - do NOT continue to another feature"
+  * Added: "One feature per context window. Always."
+- Added new section "Why Continuing to the Next Feature is Harmful"
+  * Context Window Contamination: mental baggage from previous work
+  * Increased Error Rate: cognitive fatigue and rushed quality gates
+  * Defeats Ralph's Core Philosophy: messy commits, hard to debug
+  * Lost Benefits of Fresh Start: skipping orientation step
+
+Key Files Modified:
+- AGENT_PROMPT.md: 
+  * Lines 286-314: Updated Critical Rules (DO/DO NOT lists)
+  * Lines 340-369: Replaced Context Window Management section
+  * Lines 371-385: Updated Remember section
+  * Lines 387-417: Added new "Why Continuing is Harmful" section
+- .ralph/prd.json: Marked feature 017 as complete with iterations_taken=1
+
+Testing:
+- No package.json quality gates for bash-only project
+- Manual review: All changes clearly forbid continuing to next feature
+- Prompt now has multiple reinforcing sections about stopping after one feature
+
+Challenges:
+- None - straightforward documentation update
+
+Notes for next iteration:
+- Feature 017 is now complete
+- AGENT_PROMPT.md now strongly emphasizes one-feature-per-context
+- This should prevent agents from being tempted to continue working
+- Remaining features: 001-009, 011-016 are available
+- Recommended next: Feature 003 (Enhanced test strategy) - high priority
+---
+

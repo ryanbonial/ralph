@@ -294,10 +294,12 @@ PROMISE COMPLETE
 - ✅ Write clear progress notes
 - ✅ Make descriptive git commits
 - ✅ Use browser automation for UI testing
+- ✅ **STOP after completing ONE feature - your work is done**
 
 ### DO NOT:
 
 - ❌ Work on multiple features at once
+- ❌ **Continue to the next feature after completing one - STOP IMMEDIATELY**
 - ❌ **Mark features complete with failing quality checks (linting, formatting, types, tests)**
 - ❌ Mark features complete without testing
 - ❌ Select features with unmet dependencies (check `depends_on`)
@@ -309,6 +311,7 @@ PROMISE COMPLETE
 - ❌ Assume code works without verification
 - ❌ Overwrite .ralph/progress.txt (always append)
 - ❌ Forget to increment `iterations_taken`
+- ❌ **Look at other features after finishing one - exit the context window**
 
 ## Handling Problems
 
@@ -334,24 +337,81 @@ PROMISE COMPLETE
 3. Move to a different feature if possible
 4. Leave clear notes for the next iteration
 
-## Context Window Management
+## Your Work is Complete After ONE Feature
 
-If you're approaching context limits:
+**CRITICAL: After completing one feature, your work for this iteration is DONE. STOP IMMEDIATELY.**
 
-1. Complete the current feature if nearly done
-2. Otherwise, reach a clean stopping point
-3. Commit your work
-4. Update .ralph/progress.txt with detailed notes
-5. The next session will pick up from your notes
+Ralph's philosophy is "one feature per context window" for these critical reasons:
 
-## Remember
+1. **Fresh Context**: Each feature gets a clean mental state without contamination from previous work
+2. **Verifiable Progress**: One feature = one commit = easy to review and rollback if needed
+3. **Reduced Errors**: Fatigue and context bleeding lead to bugs when working on multiple features
+4. **Incremental Safety**: Small, isolated changes are easier to test and debug
+
+**After you complete step 9 (git commit):**
+
+- ✅ Check if all features are complete (step 10)
+- ✅ Output "PROMISE COMPLETE" if done
+- ❌ DO NOT look at the next feature
+- ❌ DO NOT suggest what to do next
+- ❌ DO NOT continue working
+
+**Your job is to exit cleanly so the next Ralph iteration starts fresh.**
+
+## If You're Approaching Context Limits
+
+If you're running out of tokens BEFORE completing the feature:
+
+1. Reach a clean stopping point (don't leave broken code)
+2. Commit your partial work with a clear message
+3. Update .ralph/progress.txt with detailed notes about what's left
+4. Mark the feature as still incomplete (`"passes": false`)
+5. Exit - the next session will continue from your notes
+
+## Remember: One Feature, Then STOP
 
 > "The singular focus per iteration is key to avoiding buggy code and ensuring changes are manageable and verifiable."
 
-You are part of a continuous loop. Your job is to:
+You are part of a continuous loop, but **each iteration is independent**. Your job is to:
 
-1. Make ONE small piece of progress
+1. Make ONE piece of progress (complete ONE feature)
 2. Leave everything clean and documented
-3. Let the next iteration (or yourself) continue
+3. **STOP and exit - do NOT continue to another feature**
+
+The next Ralph invocation will start fresh with a clean context window.
+
+**One feature per context window. Always.**
 
 **Small, verified steps lead to robust applications.**
+
+## Why Continuing to the Next Feature is Harmful
+
+**DO NOT be tempted to continue working after completing one feature.** Here's why:
+
+### Context Window Contamination
+- Your context window now contains all the details, code, and decisions from the first feature
+- This "mental baggage" makes it harder to think clearly about the next feature
+- You may miss important details or make assumptions based on the previous work
+- Fresh context = fresh perspective = better code
+
+### Increased Error Rate
+- Cognitive fatigue accumulates as you work through multiple features
+- The second feature is more likely to have bugs or oversights
+- Testing becomes less thorough as you get tired
+- Quality gates may be rushed or skipped
+
+### Defeats Ralph's Core Philosophy
+- Ralph is designed around **incremental, verifiable progress**
+- One feature = one commit = one PR = easy to review
+- Multiple features in one context = messy commits = hard to debug
+- If something breaks, it's unclear which feature caused it
+
+### Lost Benefits of Fresh Start
+- Each Ralph run should start by reading progress.txt and understanding context
+- This "getting your bearings" step is crucial for orientation
+- Skipping it means you lose the benefit of reviewing what's been done
+- You may duplicate work or miss important changes
+
+**If you continue working after one feature, you're not using Ralph correctly.**
+
+The script will invoke you again with fresh context for the next feature. Trust the process.
