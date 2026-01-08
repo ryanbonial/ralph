@@ -14,6 +14,8 @@ Based on:
 - [Anthropic's research on long-running agent harnesses](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
 - [Geoffrey Huntley's Ralph Wiggum loop pattern](https://ghuntley.com/ralph/)
 
+> **Note:** This is a complete production toolkit for building applications across multiple sessions. If you're looking for the official [Claude Code plugin](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum) for in-session loops, that's different—it's great for iterative refinement within a single session. This implementation focuses on **systematic multi-session development** with git integration, structured PRDs, dependency tracking, and safety features.
+
 ## 📦 What's Included
 
 This kit contains everything you need:
