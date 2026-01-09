@@ -8,6 +8,8 @@ A complete, ready-to-use system for autonomous, incremental software development
 
 The Ralph Wiggum Technique enables AI coding agents to build complex applications systematically across multiple sessions/context windows. Instead of trying to build everything at once, the agent works on ONE feature at a time, tests it thoroughly, and leaves clear documentation for the next session.
 
+**Why "Ralph Wiggum"?** Named after The Simpsons character, the technique embraces simplicity over cleverness. Like Ralph showing up every day with innocent enthusiasm, this approach takes small, methodical steps rather than trying to solve everything at once—and that predictability is exactly what makes it work.
+
 **👀 Want to see it in action?** Check out [`EXAMPLE_OUTPUT.txt`](EXAMPLE_OUTPUT.txt) for a complete real-world iteration showing Ralph selecting a feature, implementing it, and committing changes.
 
 Based on:
