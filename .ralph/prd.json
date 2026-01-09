@@ -463,6 +463,32 @@
       "passes": true,
       "iterations_taken": 1,
       "blocked_reason": null
+    },
+    {
+      "id": "018",
+      "type": "feature",
+      "category": "infrastructure",
+      "priority": "medium",
+      "description": "Add exploration/spike mode for multi-iteration research",
+      "steps": [
+        "Add 'type: spike' support to PRD schema (alongside feature/bug/refactor/test)",
+        "Update AGENT_PROMPT.md to handle spike features differently",
+        "Add guidance: spikes require multiple iterations before completion",
+        "Add min_iterations field to PRD schema (optional, default: 2 for spikes)",
+        "Add exploration_criteria field to document what must be explored",
+        "Update agent prompt: don't mark spike complete until criteria met",
+        "Add examples of spike features to prd.json.template",
+        "Document spike/exploration workflow in README",
+        "Test: create spike feature, verify multiple iterations before completion"
+      ],
+      "estimated_complexity": "medium",
+      "depends_on": [
+        "000",
+        "017"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
     }
   ],
   "notes": [
@@ -479,6 +505,7 @@
     "Feature 011 optimizes token usage by showing only failing tests",
     "Feature 012 adds sandboxed execution for enhanced security",
     "Features 013-016 add Sanity CMS integration for PRD storage",
+    "Feature 018 adds spike/exploration mode for multi-iteration research tasks",
     "Sanity integration is broken into 4 progressively complex features",
     "Start with features that have no dependencies",
     "Use human-in-the-loop mode for complex features",
