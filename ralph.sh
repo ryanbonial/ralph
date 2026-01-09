@@ -336,6 +336,8 @@ check_completion() {
 
     if [ "$incomplete_count" -eq 0 ]; then
         log_success "All features complete!"
+        echo "  🎓 \"I'm learnding!\" - Ralph Wiggum"
+        echo ""
         return 0
     else
         log_info "Remaining features: $incomplete_count"
@@ -473,6 +475,7 @@ run_verification_tests() {
         return 0
     else
         log_error "❌ QUALITY GATES FAILED - Feature cannot be marked complete"
+        echo "  💭 \"Me fail English? That's unpossible!\" - Ralph Wiggum"
         log_warning "Fix the issues above and try again"
         return 1
     fi
@@ -480,7 +483,9 @@ run_verification_tests() {
 
 # Rollback the last commit
 rollback_last_commit() {
-    log_warning "Rolling back last commit..."
+    log_warning "Rolling back last commit... 🧸"
+    echo "  💭 \"I bent my Wookiee!\" - Ralph Wiggum"
+    echo ""
 
     local last_commit=$(git log -1 --pretty=%B 2>/dev/null || echo "")
     if [ -n "$last_commit" ]; then
@@ -513,10 +518,12 @@ check_for_git_push() {
 run_ralph_loop() {
     if [ "$RUN_MODE" = "once" ]; then
         log_info "Starting Ralph Wiggum (human-in-the-loop mode - single iteration)"
+        echo "  🍌 \"Go banana!\" - Ralph Wiggum"
         echo ""
         run_single_iteration 1
     else
         log_info "Starting Ralph Wiggum loop (continuous mode - max $MAX_ITERATIONS iterations)"
+        echo "  🍌 \"Go banana!\" - Ralph Wiggum"
         echo ""
         run_continuous_loop
     fi

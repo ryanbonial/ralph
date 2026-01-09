@@ -945,6 +945,9 @@ Ralph is now more user-friendly and can automatically create appropriate feature
 
 ✻ Worked for 3m 56s
 
+[INFO] Starting Ralph Wiggum (human-in-the-loop mode - single iteration)
+  🍌 "Go banana!" - Ralph Wiggum
+
 [INFO] Remaining features: 16
 [SUCCESS] Commit detected: docs: add EXAMPLE_OUTPUT.txt as learning resource throughout README
 [INFO] Running code quality gates...
