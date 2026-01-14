@@ -349,7 +349,7 @@
       "id": "013",
       "type": "feature",
       "category": "infrastructure",
-      "priority": "medium",
+      "priority": "critical",
       "description": "Add Sanity CMS schema for PRD storage",
       "steps": [
         "Create Sanity schema definition for PRD structure",
@@ -372,46 +372,22 @@
       "id": "014",
       "type": "feature",
       "category": "infrastructure",
-      "priority": "medium",
-      "description": "Implement Sanity read/write operations for PRD",
+      "priority": "critical",
+      "description": "Implement Sanity-only PRD storage (source of truth)",
       "steps": [
-        "Add PRD_STORAGE configuration (file|sanity|hybrid)",
-        "Implement fetch_prd_from_sanity() function",
-        "Implement update_prd_in_sanity() function",
-        "Add caching layer for Sanity queries",
-        "Handle authentication with Sanity API tokens",
-        "Add error handling for network/API failures",
-        "Implement fallback to local file if Sanity unavailable",
-        "Add sync status tracking",
-        "Test round-trip read/write operations"
+        "Add PRD_STORAGE configuration (file|sanity) - default: file",
+        "Implement fetch_prd_from_sanity() function using GROQ queries",
+        "Implement update_prd_in_sanity() function for feature status updates",
+        "Handle authentication with Sanity API tokens (SANITY_TOKEN env var)",
+        "Add error handling for network/API failures with clear messages",
+        "When PRD_STORAGE=sanity, Ralph reads from and writes to Sanity only",
+        "No local file syncing - Sanity is the single source of truth",
+        "Test: complete full iteration cycle reading/writing to Sanity",
+        "Document setup: how to configure Sanity project and tokens"
       ],
       "estimated_complexity": "medium",
       "depends_on": [
         "013"
-      ],
-      "passes": false,
-      "iterations_taken": 0,
-      "blocked_reason": null
-    },
-    {
-      "id": "015",
-      "type": "feature",
-      "category": "infrastructure",
-      "priority": "low",
-      "description": "Add bi-directional sync between local PRD and Sanity",
-      "steps": [
-        "Implement conflict detection (local vs remote changes)",
-        "Add sync command (ralph.sh --sync)",
-        "Implement push changes to Sanity",
-        "Implement pull changes from Sanity",
-        "Add merge strategies (local-wins, remote-wins, manual)",
-        "Track last sync timestamp",
-        "Add sync status to progress log",
-        "Document sync workflows and conflict resolution"
-      ],
-      "estimated_complexity": "medium",
-      "depends_on": [
-        "014"
       ],
       "passes": false,
       "iterations_taken": 0,
@@ -424,19 +400,19 @@
       "priority": "low",
       "description": "Create Sanity Studio UI for PRD management",
       "steps": [
-        "Set up Sanity Studio project structure",
+        "Set up Sanity Studio project structure in .ralph/studio/",
         "Create custom input components for PRD fields",
-        "Add visual dependency graph view",
+        "Add visual dependency graph view showing feature relationships",
         "Implement drag-and-drop priority ordering",
-        "Add filtering and search capabilities",
-        "Create dashboard showing progress metrics",
-        "Add real-time collaboration indicators",
-        "Document Studio deployment options",
-        "Create screenshot examples for README"
+        "Add filtering and search capabilities (by type, priority, status)",
+        "Create dashboard showing progress metrics and completion stats",
+        "Add real-time collaboration indicators for team usage",
+        "Document Studio deployment options (local, Vercel, Netlify)",
+        "Create screenshot examples for README showing Studio interface"
       ],
       "estimated_complexity": "large",
       "depends_on": [
-        "015"
+        "014"
       ],
       "passes": false,
       "iterations_taken": 0,
@@ -527,10 +503,11 @@
     "Feature 009 documents all the new features",
     "Feature 011 optimizes token usage by showing only failing tests",
     "Feature 012 adds sandboxed execution for enhanced security",
-    "Features 013-016 add Sanity CMS integration for PRD storage",
+    "Features 013-014 add Sanity CMS as source-of-truth for PRD storage",
+    "Feature 016 adds optional Sanity Studio UI for team collaboration (low priority)",
     "Feature 018 adds spike/exploration mode for multi-iteration research tasks",
     "Feature 019 bridges Cursor Planning Mode with Ralph execution",
-    "Sanity integration is broken into 4 progressively complex features",
+    "Sanity integration uses simple source-of-truth model (no sync complexity)",
     "Start with features that have no dependencies",
     "Use human-in-the-loop mode for complex features",
     "Switch to continuous mode once confident with the patterns"
