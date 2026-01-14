@@ -489,6 +489,29 @@
       "passes": false,
       "iterations_taken": 0,
       "blocked_reason": null
+    },
+    {
+      "id": "019",
+      "type": "feature",
+      "category": "infrastructure",
+      "priority": "medium",
+      "description": "Add Cursor Planning Mode helper/converter for PRD generation",
+      "steps": [
+        "Create PLANNING_TO_PRD.md guide explaining the planning-to-execution workflow",
+        "Document how to use Cursor Planning Mode to generate feature backlog",
+        "Add prompt template for asking Planning Mode to output Ralph-compatible format",
+        "Create script or helper to validate/convert planning output to prd.json schema",
+        "Add examples showing Planning Mode output → Ralph PRD translation",
+        "Document best practices: Planning Mode for architecture, Ralph for execution",
+        "Add section to README explaining the Planning + Ralph workflow",
+        "Include tips on granularity, dependencies, and complexity estimation",
+        "Test: generate plan with Cursor, convert to PRD, run through Ralph loop"
+      ],
+      "estimated_complexity": "small",
+      "depends_on": [],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
     }
   ],
   "notes": [
@@ -506,6 +529,7 @@
     "Feature 012 adds sandboxed execution for enhanced security",
     "Features 013-016 add Sanity CMS integration for PRD storage",
     "Feature 018 adds spike/exploration mode for multi-iteration research tasks",
+    "Feature 019 bridges Cursor Planning Mode with Ralph execution",
     "Sanity integration is broken into 4 progressively complex features",
     "Start with features that have no dependencies",
     "Use human-in-the-loop mode for complex features",
