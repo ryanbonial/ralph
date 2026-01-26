@@ -18,7 +18,8 @@
       "estimated_complexity": "small",
       "depends_on": [],
       "passes": false,
-      "iterations_taken": 0
+      "iterations_taken": 0,
+      "test_files": []
     },
     {
       "id": "002",
@@ -71,7 +72,8 @@
       "estimated_complexity": "medium",
       "depends_on": ["003"],
       "passes": false,
-      "iterations_taken": 0
+      "iterations_taken": 0,
+      "test_files": []
     },
     {
       "id": "005",
@@ -89,7 +91,8 @@
       "estimated_complexity": "large",
       "depends_on": ["003"],
       "passes": false,
-      "iterations_taken": 0
+      "iterations_taken": 0,
+      "test_files": []
     },
     {
       "id": "006",
@@ -106,7 +109,8 @@
       "estimated_complexity": "medium",
       "depends_on": ["004", "005"],
       "passes": false,
-      "iterations_taken": 0
+      "iterations_taken": 0,
+      "test_files": []
     },
     {
       "id": "007",
@@ -125,6 +129,7 @@
       "depends_on": [],
       "passes": false,
       "iterations_taken": 0,
+      "test_files": [],
       "blocked_reason": null
     }
   ],
@@ -144,6 +149,7 @@
     "depends_on": "Array of feature IDs that must be completed before this one",
     "passes": "Boolean - true when fully implemented and verified",
     "iterations_taken": "Number of Ralph iterations needed to complete (tracked automatically)",
-    "blocked_reason": "String - if blocked, explain why (null if not blocked)"
+    "blocked_reason": "String - if blocked, explain why (null if not blocked)",
+    "test_files": "Optional array of test file paths that must exist for this feature (e.g., ['tests/myFeature.test.js']). Enforced by quality gate for 'feature' and 'bug' types."
   }
 }

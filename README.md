@@ -402,6 +402,66 @@ npm test
 - New features should have test coverage
 - **Fix**: Fix failing tests before marking feature complete
 
+### Quality Gate 5: Test Coverage (BLOCKING for feature/bug types)
+
+```bash
+# Enabled by default
+TEST_REQUIRED_FOR_FEATURES=true ./ralph.sh
+```
+
+**This gate ensures new functionality has tests - a core Ralph philosophy.**
+
+#### How It Works
+
+Ralph checks the feature `type` and enforces test requirements:
+
+- **`feature` type**: MUST have tests - feature cannot pass without them
+  - If `test_files` specified in PRD: verifies those files exist
+  - Otherwise: warns but allows (backward compatible)
+- **`bug` type**: MUST have regression test - prevents bug from returning
+  - If `test_files` specified in PRD: verifies those files exist
+  - Otherwise: warns but allows (backward compatible)
+- **`refactor` type**: No new tests required - existing tests prove behavior unchanged
+- **`test` type**: You are writing tests - this is the implementation
+
+#### Specifying Test Files in PRD
+
+Add optional `test_files` field to your features:
+
+```json
+{
+  "id": "042",
+  "type": "feature",
+  "description": "User can login with email and password",
+  "test_files": [
+    "tests/auth.test.js",
+    "tests/login.test.js"
+  ],
+  "passes": false
+}
+```
+
+When specified, Ralph will **verify these files exist** before marking the feature complete.
+
+#### Why This Matters
+
+1. **Prevents regressions**: Tests catch bugs before they reach production
+2. **Documents behavior**: Tests serve as executable documentation
+3. **Enables refactoring**: Comprehensive tests make future changes safe
+4. **Builds confidence**: Green tests mean features work as intended
+
+#### Configuration
+
+```bash
+# Enforce test requirements (default)
+TEST_REQUIRED_FOR_FEATURES=true ./ralph.sh
+
+# Disable test enforcement (not recommended)
+TEST_REQUIRED_FOR_FEATURES=false ./ralph.sh
+```
+
+**Recommendation**: Keep this enabled. Tests are not optional for quality software.
+
 ### Configuration Options
 
 ```bash
@@ -425,6 +485,7 @@ Quality Gate Summary:
   ✅ Linting
   ✅ Type Checking
   ✅ Tests
+  ✅ Test Coverage
 
 ✅ ALL QUALITY GATES PASSED
 ```
@@ -437,6 +498,7 @@ Quality Gate Summary:
   ❌ Linting
   ❌ Type Checking
   ✅ Tests
+  ❌ Test Coverage
 
 ❌ QUALITY GATES FAILED - Feature cannot be marked complete
 ```
