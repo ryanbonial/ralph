@@ -1,0 +1,20 @@
+{
+  "name": "ralph-wiggum",
+  "version": "1.0.0",
+  "description": "Ralph Wiggum Technique - AI-powered iterative software development",
+  "scripts": {
+    "test": "bats tests/*.bats",
+    "test:verbose": "bats --verbose-run tests/*.bats"
+  },
+  "keywords": [
+    "ai",
+    "automation",
+    "development",
+    "testing"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "bats": "^1.11.0"
+  }
+}
