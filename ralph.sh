@@ -1685,5 +1685,7 @@ main() {
     run_ralph_loop
 }
 
-# Run main function
-main "$@"
+# Run main function only if script is executed directly (not sourced)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi
