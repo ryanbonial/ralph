@@ -625,6 +625,73 @@ RUN_MODE=continuous AUTO_CREATE_BRANCH=true ./ralph.sh
 - ✅ Safe to run Ralph on main - it automatically moves to a feature branch
 - ✅ Conventional branch prefixes (feature/, bugfix/, etc.) for better organization
 
+### Sanity CMS Integration
+
+Ralph supports storing your PRD (Product Requirements Document) in Sanity CMS instead of local JSON files. This enables team collaboration, visual editing, version history, and real-time sync across multiple Ralph instances.
+
+**Current Status:**
+
+- ✅ **Feature 013 (Complete)**: Sanity schema definitions created
+- ⏳ **Feature 014 (Planned)**: Sanity API integration for read/write operations
+- ⏳ **Feature 016 (Planned)**: Sanity Studio UI for PRD management
+
+**Configuration (Available in Feature 014):**
+
+```bash
+# Sanity project credentials
+export SANITY_PROJECT_ID="your-project-id"
+export SANITY_DATASET="production"
+export SANITY_TOKEN="your-write-token"
+
+# Storage mode: "file" (default) or "sanity" (requires Feature 014)
+export PRD_STORAGE="file"
+
+# Run Ralph with Sanity storage (when Feature 014 is implemented)
+PRD_STORAGE=sanity ./ralph.sh
+```
+
+**Schema Files:**
+
+The Sanity schema definitions are available in `.ralph/sanity/schemas/`:
+
+- `ralphProject.js` - Main PRD document schema
+- `ralphFeature.js` - Individual feature schema
+- `index.js` - Schema exports
+
+**Migration Tool:**
+
+Convert your existing `.ralph/prd.json` to Sanity documents:
+
+```bash
+# Generate Sanity document JSON
+node .ralph/sanity/migrate.js > prd-document.json
+
+# Import to Sanity (requires Sanity CLI)
+sanity dataset import prd-document.json production --replace
+```
+
+**Documentation:**
+
+See `.ralph/sanity/README.md` for:
+- Complete setup instructions
+- Schema deployment options
+- Migration guide
+- Sanity Studio integration
+
+**Benefits:**
+
+- 🌐 **Team Collaboration**: Multiple developers can access the same PRD
+- 🎨 **Visual Editing**: Manage features through Sanity Studio UI
+- 📜 **Version History**: Track all changes to features over time
+- 🔄 **Real-time Sync**: Changes are immediately available across all instances
+- 🔍 **Advanced Queries**: Use GROQ to query and analyze your feature backlog
+
+**Next Steps:**
+
+1. Deploy schemas to your Sanity project (see `.ralph/sanity/README.md`)
+2. Wait for Feature 014 to enable `PRD_STORAGE=sanity` mode
+3. Optionally implement Sanity Studio UI (Feature 016)
+
 ### Combine Options
 
 ```bash
