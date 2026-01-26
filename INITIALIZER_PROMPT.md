@@ -69,7 +69,12 @@ Create a detailed `.ralph/prd.json` file by breaking down the user requirements 
       "passes": false,
       "iterations_taken": 0,
       "blocked_reason": null,
-      "test_files": []
+      "test_files": [],
+      "acceptance_criteria": {
+        "unit_tests": [],
+        "e2e_tests": [],
+        "manual_checks": []
+      }
     }
   ]
 }
@@ -113,6 +118,26 @@ Create a detailed `.ralph/prd.json` file by breaking down the user requirements 
 - **For `refactor` type**: Leave empty - existing tests prove behavior unchanged
 - **For `test` type**: These are the implementation - may list the test files being created
 - If not specified, Ralph will warn but not fail (backward compatible)
+
+**Acceptance Criteria (Optional but Recommended):**
+
+- Use `acceptance_criteria` object to provide structured verification requirements
+- Includes three arrays: `unit_tests`, `e2e_tests`, and `manual_checks`
+- Example:
+  ```json
+  "acceptance_criteria": {
+    "unit_tests": ["tests/auth.test.js"],
+    "e2e_tests": ["tests/e2e/login.spec.js"],
+    "manual_checks": [
+      "User can log in with valid credentials",
+      "Error message displays for invalid credentials"
+    ]
+  }
+  ```
+- Ralph will verify all test files from acceptance_criteria exist (combined with test_files)
+- Manual checks provide guidance for agent verification steps
+- Provides clearer structure than test_files alone
+- Can be used alongside or instead of test_files field
 
 **Examples of Good Features:**
 

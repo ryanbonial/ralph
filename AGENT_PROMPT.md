@@ -152,6 +152,15 @@ Write clean, well-documented code:
 
 **This is critical.** You MUST verify the feature works end-to-end:
 
+**Check Acceptance Criteria:**
+
+If the feature has an `acceptance_criteria` field in the PRD, use it to guide your testing:
+- **unit_tests**: Array of unit test files that must exist
+- **e2e_tests**: Array of end-to-end test files that must exist
+- **manual_checks**: Array of manual verification steps to perform
+
+The quality gate will verify all test files from `acceptance_criteria` (and `test_files`) exist.
+
 **IMPORTANT - Test Creation Requirements by Type:**
 
 - **For `feature` type**: You MUST write new tests for the functionality. Features cannot be marked complete without tests.

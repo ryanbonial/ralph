@@ -595,3 +595,73 @@ Notes for next iteration:
 - Documentation includes practical example for clarity
 - Next features available: 001, 002, 003, 005, 006, 007, 011, 012, 016, 018, 019
 ---
+
+--- 2026-01-26 (Feature 003) ---
+Feature: 003 - Enhanced test strategy with explicit acceptance criteria
+Status: Completed
+Type: feature
+Complexity: medium
+
+Implementation:
+- Added acceptance_criteria object to PRD schema (prd.json.template)
+  * Structure includes unit_tests, e2e_tests, and manual_checks arrays
+  * Added to all 4 example features with realistic test scenarios
+  * Updated field_definitions to document acceptance_criteria usage
+- Enhanced ralph.sh Quality Gate 5 to check acceptance_criteria
+  * Updated Python code to collect test files from both test_files and acceptance_criteria
+  * Combines unit_tests and e2e_tests into single validation list
+  * Added display of manual_checks after test verification passes
+  * Manual checks help agents understand what to verify
+- Updated AGENT_PROMPT.md section 6 "Test Thoroughly"
+  * Added "Check Acceptance Criteria" section before test requirements
+  * Documents unit_tests, e2e_tests, manual_checks fields
+  * Explains quality gate will verify all test files exist
+- Updated INITIALIZER_PROMPT.md
+  * Added comprehensive "Acceptance Criteria" section after "Test Files"
+  * Includes example JSON structure with all three arrays
+  * Documents when to use acceptance_criteria vs test_files
+  * Updated schema structure example to include acceptance_criteria
+- Updated README.md
+  * Renamed "Feature Dependencies" to "Feature Dependencies & Acceptance Criteria"
+  * Added comprehensive "Acceptance Criteria" subsection with examples
+  * Documented benefits: explicit requirements, structured approach, quality enforcement
+  * Explained how it works in 5-step workflow
+  * Noted it's optional but recommended
+- Created comprehensive test suite (tests/ralph-acceptance-criteria.bats)
+  * 20 new tests covering all aspects of acceptance_criteria
+  * Tests template includes acceptance_criteria fields
+  * Tests ralph.sh correctly collects and validates test files
+  * Tests documentation mentions and explains acceptance_criteria
+  * All tests pass (75 total tests now)
+
+Testing:
+- ✅ Bash syntax validation passed: bash -n ralph.sh
+- ✅ All 75 tests pass: npm test exits 0
+  * 20 new tests for acceptance_criteria feature
+  * 55 existing tests continue to pass
+- ✅ JSON validation: prd.json.template is valid JSON
+- ✅ Manual verification: acceptance_criteria structure is correct
+- ✅ Test file specified in PRD: tests/ralph-acceptance-criteria.bats exists
+
+Key Files Modified:
+- prd.json.template: Added acceptance_criteria to 4 features, updated field_definitions
+- ralph.sh: Enhanced Quality Gate 5 (lines 754-833) to check acceptance_criteria
+- AGENT_PROMPT.md: Added acceptance criteria guidance in section 6
+- INITIALIZER_PROMPT.md: Added acceptance criteria section and schema example
+- README.md: Added comprehensive acceptance criteria documentation
+- tests/ralph-acceptance-criteria.bats: Created 20 new tests
+- .ralph/prd.json: Marked feature 003 as complete with iterations_taken=1
+
+Challenges:
+- None - implementation was straightforward
+- One test initially failed due to incorrect grep syntax, fixed immediately
+- All quality gates passed on first attempt
+
+Notes for next iteration:
+- Feature 003 is now complete
+- acceptance_criteria provides structured testing requirements
+- Works alongside test_files field (both are validated)
+- Manual checks display helps agents know what to verify
+- Next high-priority features: 007, 011, 012 are available
+- Features 004, 008 remain blocked (depend on feature 001)
+---

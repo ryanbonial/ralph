@@ -766,10 +766,20 @@ for feature in prd.get('features', []):
                     all_deps_met = False
                     break
             if all_deps_met:
+                # Collect test files from both test_files and acceptance_criteria
+                all_tests = set()
                 test_files = feature.get('test_files', [])
-                if test_files:
-                    for tf in test_files:
-                        print(tf)
+                for tf in test_files:
+                    all_tests.add(tf)
+
+                acceptance = feature.get('acceptance_criteria', {})
+                for ut in acceptance.get('unit_tests', []):
+                    all_tests.add(ut)
+                for et in acceptance.get('e2e_tests', []):
+                    all_tests.add(et)
+
+                for test_file in all_tests:
+                    print(test_file)
                 break
 " 2>/dev/null)
 
@@ -792,6 +802,34 @@ for feature in prd.get('features', []):
                 else
                     log_success "✅ PASSED: All required test files exist"
                     quality_gate_results="${quality_gate_results}\n  ✅ Test Coverage"
+
+                    # Display manual checks from acceptance_criteria if present
+                    local manual_checks=$(echo "$prd_content" | python3 -c "
+import sys, json
+prd = json.load(sys.stdin)
+for feature in prd.get('features', []):
+    if not feature.get('passes', False):
+        blocked = feature.get('blocked_reason')
+        if blocked is None or blocked == '':
+            depends_on = feature.get('depends_on', [])
+            all_deps_met = True
+            for dep_id in depends_on:
+                dep_complete = any(f.get('id') == dep_id and f.get('passes', False) for f in prd.get('features', []))
+                if not dep_complete:
+                    all_deps_met = False
+                    break
+            if all_deps_met:
+                acceptance = feature.get('acceptance_criteria', {})
+                manual_checks = acceptance.get('manual_checks', [])
+                if manual_checks:
+                    for check in manual_checks:
+                        print(f'    - {check}')
+                break
+" 2>/dev/null)
+                    if [ -n "$manual_checks" ]; then
+                        log_info "📋 Manual acceptance checks to verify:"
+                        echo -e "$manual_checks"
+                    fi
                 fi
             else
                 # No test_files specified - check if any test files exist in tests/ directory

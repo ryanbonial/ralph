@@ -19,7 +19,16 @@
       "depends_on": [],
       "passes": false,
       "iterations_taken": 0,
-      "test_files": []
+      "test_files": [],
+      "acceptance_criteria": {
+        "unit_tests": [],
+        "e2e_tests": [],
+        "manual_checks": [
+          "package.json exists and has valid JSON",
+          "npm install completes without errors",
+          "Build command runs successfully"
+        ]
+      }
     },
     {
       "id": "002",
@@ -73,7 +82,16 @@
       "depends_on": ["003"],
       "passes": false,
       "iterations_taken": 0,
-      "test_files": []
+      "test_files": ["tests/button.test.js"],
+      "acceptance_criteria": {
+        "unit_tests": ["tests/button.test.js"],
+        "e2e_tests": ["tests/e2e/button-click.spec.js"],
+        "manual_checks": [
+          "Button is visible and clickable",
+          "Response appears within 2 seconds",
+          "UI feedback is clear"
+        ]
+      }
     },
     {
       "id": "005",
@@ -92,7 +110,22 @@
       "depends_on": ["003"],
       "passes": false,
       "iterations_taken": 0,
-      "test_files": []
+      "test_files": ["tests/form-validation.test.js"],
+      "acceptance_criteria": {
+        "unit_tests": [
+          "tests/form-validation.test.js",
+          "tests/validators.test.js"
+        ],
+        "e2e_tests": [
+          "tests/e2e/form-submit-valid.spec.js",
+          "tests/e2e/form-submit-invalid.spec.js"
+        ],
+        "manual_checks": [
+          "Error messages are clear and actionable",
+          "Form submits only when all fields are valid",
+          "Success message displays after submission"
+        ]
+      }
     },
     {
       "id": "006",
@@ -110,7 +143,19 @@
       "depends_on": ["004", "005"],
       "passes": false,
       "iterations_taken": 0,
-      "test_files": []
+      "test_files": ["tests/business-logic.test.js"],
+      "acceptance_criteria": {
+        "unit_tests": [
+          "tests/business-logic.test.js",
+          "tests/edge-cases.test.js"
+        ],
+        "e2e_tests": [],
+        "manual_checks": [
+          "Code coverage is above 80%",
+          "All tests pass with no warnings",
+          "Edge cases are documented in test names"
+        ]
+      }
     },
     {
       "id": "007",
@@ -150,6 +195,7 @@
     "passes": "Boolean - true when fully implemented and verified",
     "iterations_taken": "Number of Ralph iterations needed to complete (tracked automatically)",
     "blocked_reason": "String - if blocked, explain why (null if not blocked)",
-    "test_files": "Optional array of test file paths that must exist for this feature (e.g., ['tests/myFeature.test.js']). Enforced by quality gate for 'feature' and 'bug' types."
+    "test_files": "Optional array of test file paths that must exist for this feature (e.g., ['tests/myFeature.test.js']). Enforced by quality gate for 'feature' and 'bug' types.",
+    "acceptance_criteria": "Optional structured object with 'unit_tests' (array), 'e2e_tests' (array), and 'manual_checks' (array). Provides explicit verification requirements. When specified, all listed test files must exist and manual checks should be verified."
   }
 }

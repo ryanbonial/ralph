@@ -565,9 +565,11 @@ Quality Gate Summary:
 
 **Important**: Features CANNOT be marked as `"passes": true` in `prd.json` until ALL quality gates pass.
 
-## 📊 Feature Dependencies
+## 📊 Feature Dependencies & Acceptance Criteria
 
-Features can now declare dependencies:
+### Feature Dependencies
+
+Features can declare dependencies using the `depends_on` field:
 
 ```json
 {
@@ -579,6 +581,48 @@ Features can now declare dependencies:
 ```
 
 The agent will automatically skip features with unmet dependencies.
+
+### Acceptance Criteria
+
+Ralph supports structured acceptance criteria to make testing requirements explicit:
+
+```json
+{
+  "id": "004",
+  "description": "User can submit form with validation",
+  "test_files": ["tests/form-validation.test.js"],
+  "acceptance_criteria": {
+    "unit_tests": [
+      "tests/form-validation.test.js",
+      "tests/validators.test.js"
+    ],
+    "e2e_tests": [
+      "tests/e2e/form-submit-valid.spec.js",
+      "tests/e2e/form-submit-invalid.spec.js"
+    ],
+    "manual_checks": [
+      "Error messages are clear and actionable",
+      "Form submits only when all fields are valid",
+      "Success message displays after submission"
+    ]
+  }
+}
+```
+
+**Benefits:**
+- **Explicit test requirements**: Specify exactly which test files must exist
+- **Structured approach**: Separate unit tests, e2e tests, and manual checks
+- **Quality gate enforcement**: Ralph verifies all test files exist before completion
+- **Clear guidance**: Manual checks provide verification steps for agents
+
+**How it works:**
+1. Agent reads acceptance_criteria from PRD when working on feature
+2. Agent creates all specified test files during implementation
+3. Quality Gate 5 verifies all test files from acceptance_criteria exist
+4. Manual checks are displayed to remind agent of verification steps
+5. Feature cannot pass without all required test files
+
+**Note:** acceptance_criteria is optional but recommended, especially for features with complex testing requirements. It works alongside the simpler test_files field.
 
 ## 🐛 Common Issues
 
