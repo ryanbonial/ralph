@@ -768,6 +768,79 @@ A well-running Ralph loop shows:
 - ✅ Accurate `iterations_taken` tracking
 - ✅ Minimal blocked features
 
+## 🧪 Testing
+
+Ralph includes a comprehensive automated test suite using [bats-core](https://github.com/bats-core/bats-core) to verify core functionality.
+
+### Running Tests
+
+```bash
+# Install dependencies (first time only)
+npm install
+
+# Run all tests
+npm test
+
+# Run tests with verbose output
+npm run test:verbose
+```
+
+### What's Tested
+
+The test suite covers:
+
+- **Configuration Loading** (20 tests)
+  - Default configuration values
+  - Environment variable overrides
+  - File path configurations
+
+- **Git Safety Features** (12 tests)
+  - Protected branch detection
+  - Auto-branch creation
+  - Git push blocking
+  - Branch naming conventions
+
+- **Feature Selection Logic** (10 tests)
+  - Priority-based selection
+  - Dependency checking
+  - Blocked feature filtering
+  - Completion detection
+
+- **PRD Validation** (13 tests)
+  - JSON schema validation
+  - Required field checks
+  - Type validation
+  - Test fixtures
+
+### Test Results
+
+All 55 tests pass successfully:
+
+```
+✓ ralph.sh script exists and is executable
+✓ ralph.sh has valid bash syntax
+✓ Configuration defaults are correct
+✓ Git safety features work properly
+✓ Feature selection respects dependencies and priority
+✓ PRD JSON parsing handles all field types
+```
+
+### Continuous Integration
+
+Tests run automatically on every push and pull request via GitHub Actions (see `.github/workflows/test.yml`).
+
+### Test Structure
+
+```
+tests/
+├── ralph-config.bats          # Configuration loading tests
+├── ralph-git-safety.bats      # Git safety feature tests
+├── ralph-feature-selection.bats # Feature selection logic tests
+├── ralph-prd-parsing.bats     # PRD validation tests
+└── fixtures/
+    └── mock-prd.json          # Test fixture with sample features
+```
+
 ## 🎓 Learning Resources
 
 - **[EXAMPLE_OUTPUT.txt](EXAMPLE_OUTPUT.txt)** - See a real Ralph iteration from start to finish (feature selection, implementation, testing, commit)

@@ -1,0 +1,72 @@
+{
+  "project": "Test Project",
+  "description": "Mock PRD for testing",
+  "schema_version": "2.0",
+  "features": [
+    {
+      "id": "001",
+      "type": "feature",
+      "category": "functional",
+      "priority": "high",
+      "description": "First feature with no dependencies",
+      "steps": [
+        "Step 1",
+        "Step 2"
+      ],
+      "estimated_complexity": "small",
+      "depends_on": [],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
+    },
+    {
+      "id": "002",
+      "type": "bug",
+      "category": "quality",
+      "priority": "critical",
+      "description": "Second feature depends on first",
+      "steps": [
+        "Step 1"
+      ],
+      "estimated_complexity": "medium",
+      "depends_on": ["001"],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
+    },
+    {
+      "id": "003",
+      "type": "refactor",
+      "category": "quality",
+      "priority": "low",
+      "description": "Already completed feature",
+      "steps": [
+        "Step 1"
+      ],
+      "estimated_complexity": "small",
+      "depends_on": [],
+      "passes": true,
+      "iterations_taken": 2,
+      "blocked_reason": null
+    },
+    {
+      "id": "004",
+      "type": "test",
+      "category": "testing",
+      "priority": "medium",
+      "description": "Blocked feature",
+      "steps": [
+        "Step 1"
+      ],
+      "estimated_complexity": "large",
+      "depends_on": [],
+      "passes": false,
+      "iterations_taken": 1,
+      "blocked_reason": "Waiting for external dependency"
+    }
+  ],
+  "notes": [
+    "Mock PRD for testing"
+  ],
+  "field_definitions": {}
+}
