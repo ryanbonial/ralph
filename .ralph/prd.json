@@ -222,19 +222,23 @@
       "id": "008",
       "type": "test",
       "category": "testing",
-      "priority": "high",
-      "description": "Create test suite for ralph.sh script",
+      "priority": "medium",
+      "description": "Add advanced test coverage: error recovery, rollback, and integration tests",
       "steps": [
-        "Set up bash testing framework (bats or similar)",
-        "Write tests for configuration loading",
-        "Write tests for feature selection logic",
-        "Write tests for error recovery and rollback",
-        "Write tests for dependency checking",
-        "Create mock PRD files for testing",
-        "Add CI workflow to run tests on changes"
+        "Write tests for automatic rollback when tests fail (ROLLBACK_ON_FAILURE)",
+        "Write tests for verification gate failures and recovery",
+        "Write tests for git commit rollback scenarios",
+        "Write integration tests for auto-PR creation (feature 001)",
+        "Write integration tests for acceptance criteria checking (feature 003)",
+        "Write tests for edge cases: corrupt PRD, missing dependencies, circular deps",
+        "Write tests for quality gate failures: linting, formatting, type errors",
+        "Write tests for parallel work streams (feature 002, when implemented)",
+        "Add tests for error message quality and suggestions",
+        "Document advanced test scenarios in tests/README.md"
       ],
       "estimated_complexity": "large",
       "depends_on": [
+        "020",
         "001",
         "003"
       ],
