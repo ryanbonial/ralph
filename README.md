@@ -954,6 +954,115 @@ Error: File not found
 - Clear indication of what's required vs optional
 - Installation hints for common package managers
 
+### Test Output Optimization (Feature 011)
+
+Ralph optimizes test output to conserve tokens when working with AI coding agents. Instead of showing hundreds of lines of passing tests, Ralph displays only what's needed.
+
+#### TEST_OUTPUT_MODE Configuration
+
+Control how much test output is shown:
+
+```bash
+# Default: Show summary + only failing tests (optimal)
+TEST_OUTPUT_MODE=failures ./ralph.sh
+
+# Show only statistics (most concise)
+TEST_OUTPUT_MODE=summary ./ralph.sh
+
+# Show everything (original behavior)
+TEST_OUTPUT_MODE=full ./ralph.sh
+```
+
+**Output Modes:**
+
+1. **`failures` (default - recommended)**
+   - Shows test summary statistics
+   - Shows only failing test details
+   - Optimal balance of information and token usage
+   - Best for most workflows
+
+2. **`summary`**
+   - Shows only test statistics (total, passed, failed, skipped)
+   - Most concise - minimal token usage
+   - Good when you just need to know pass/fail status
+
+3. **`full`**
+   - Shows complete test output
+   - Original behavior before Feature 011
+   - Use when debugging test infrastructure
+
+#### Example Output
+
+**When tests pass (failures mode):**
+```
+🧪 Quality Gate 4/5: Test Suite
+
+📊 Test Summary:
+   Total:   138 tests
+   Passed:  138 ✅
+
+[SUCCESS] ✅ PASSED: Test suite
+```
+
+**When tests fail (failures mode):**
+```
+🧪 Quality Gate 4/5: Test Suite
+
+📊 Test Summary:
+   Total:   138 tests
+   Passed:  135 ✅
+   Failed:  3 ❌
+
+❌ Failing Tests:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+not ok 42 feature should handle edge case
+# Expected: true
+# Received: false
+not ok 87 integration test with API
+# Network error: Connection refused
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ERROR] ❌ FAILED: Test suite failed (BLOCKING)
+```
+
+#### Supported Test Frameworks
+
+Ralph's test parser supports multiple test frameworks:
+
+- **Bats** (Bash Automated Testing System) - TAP format
+- **Jest** - JavaScript/TypeScript testing
+- **Vitest** - Fast Vite-native testing
+- **Mocha** - JavaScript testing framework
+- **Generic TAP** - Test Anything Protocol
+
+The parser automatically detects the test format and extracts relevant information.
+
+#### Token Savings
+
+**Before Feature 011 (full mode):**
+- 138 passing tests = ~800 lines of output = ~6,000 tokens consumed
+- All test details shown even when passing
+
+**After Feature 011 (failures mode):**
+- 138 passing tests = ~7 lines of output = ~50 tokens consumed
+- **99% reduction in tokens when tests pass**
+- Only failures shown when needed
+
+**Impact on continuous mode:**
+- Each iteration conserves ~5,950 tokens when tests pass
+- 10 iterations = ~60,000 tokens saved
+- Allows more iterations within context window limits
+
+#### Why This Matters
+
+1. **Token Efficiency**: Maximize the number of Ralph iterations per session
+2. **Signal vs Noise**: Focus on failures, not verbose passing test logs
+3. **Cost Savings**: Fewer tokens = lower AI API costs
+4. **Better Context**: More room for code, planning, and implementation
+5. **Faster Feedback**: Quickly see what failed without scrolling
+
+**Recommendation**: Use the default `failures` mode unless you need complete test output for debugging.
+
 ### Sanity CMS Integration
 
 Ralph supports storing your PRD (Product Requirements Document) in Sanity CMS instead of local JSON files. This enables team collaboration, visual editing, version history, and real-time sync across multiple Ralph instances.

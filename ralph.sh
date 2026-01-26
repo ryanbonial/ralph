@@ -63,6 +63,12 @@ AUTOFIX_PRETTIER="${AUTOFIX_PRETTIER:-true}"
 # When true, features of type 'feature' or 'bug' cannot be marked complete without tests
 TEST_REQUIRED_FOR_FEATURES="${TEST_REQUIRED_FOR_FEATURES:-true}"
 
+# Test Output Mode Configuration (Feature 011)
+# Controls how much test output is shown to conserve tokens
+# Options: "full" (all output), "failures" (only failing tests), "summary" (stats only)
+# Default: "failures" (optimal balance of information and token usage)
+TEST_OUTPUT_MODE="${TEST_OUTPUT_MODE:-failures}"
+
 # Sanity CMS Configuration (Feature 013)
 # Configure Sanity project for PRD storage (used in Feature 014)
 SANITY_PROJECT_ID="${SANITY_PROJECT_ID:-}"
@@ -928,6 +934,162 @@ except:
     fi
 }
 
+# Parse test output to extract test statistics and failures
+# Arguments: $1 = output file path
+# Outputs: total,passed,failed,skipped
+parse_test_output() {
+    local output_file="$1"
+
+    if [ ! -f "$output_file" ]; then
+        echo "0,0,0,0"
+        return 1
+    fi
+
+    # Try to detect test framework and parse accordingly
+    local total=0 passed=0 failed=0 skipped=0
+
+    # Bats/TAP format: "1..108" and "ok/not ok" lines
+    if grep -q "^1\.\.[0-9]" "$output_file"; then
+        total=$(grep "^1\.\." "$output_file" | head -1 | sed 's/1\.\.//')
+        passed=$(grep -c "^ok " "$output_file" || echo "0")
+        failed=$(grep -c "^not ok " "$output_file" || echo "0")
+        skipped=$(grep -c "^ok .* # skip" "$output_file" || echo "0")
+
+    # Jest format: "Tests: X failed, Y passed, Z total"
+    elif grep -q "Tests:" "$output_file"; then
+        failed=$(grep "Tests:" "$output_file" | tail -1 | sed -n 's/.*\([0-9]\+\) failed.*/\1/p' || echo "0")
+        passed=$(grep "Tests:" "$output_file" | tail -1 | sed -n 's/.*\([0-9]\+\) passed.*/\1/p' || echo "0")
+        skipped=$(grep "Tests:" "$output_file" | tail -1 | sed -n 's/.*\([0-9]\+\) skipped.*/\1/p' || echo "0")
+        total=$(grep "Tests:" "$output_file" | tail -1 | sed -n 's/.*\([0-9]\+\) total.*/\1/p' || echo "0")
+
+    # Vitest format: "Test Files X passed (Y)" or "FAIL X tests failed"
+    elif grep -qE "(Test Files|PASS|FAIL)" "$output_file"; then
+        failed=$(grep -oE "([0-9]+) failed" "$output_file" | tail -1 | awk '{print $1}' || echo "0")
+        passed=$(grep -oE "([0-9]+) passed" "$output_file" | tail -1 | awk '{print $1}' || echo "0")
+        skipped=$(grep -oE "([0-9]+) skipped" "$output_file" | tail -1 | awk '{print $1}' || echo "0")
+        total=$((passed + failed + skipped))
+
+    # Mocha format: "X passing" "Y failing"
+    elif grep -qE "[0-9]+ (passing|failing)" "$output_file"; then
+        passed=$(grep -oE "[0-9]+ passing" "$output_file" | tail -1 | awk '{print $1}' || echo "0")
+        failed=$(grep -oE "[0-9]+ failing" "$output_file" | tail -1 | awk '{print $1}' || echo "0")
+        skipped=$(grep -oE "[0-9]+ pending" "$output_file" | tail -1 | awk '{print $1}' || echo "0")
+        total=$((passed + failed + skipped))
+
+    # Fallback: try to count based on common patterns
+    else
+        # Count lines that look like test results
+        passed=$(grep -cE "(✓|✔|PASS|\[32mok)" "$output_file" 2>/dev/null || echo "0")
+        failed=$(grep -cE "(✗|✘|FAIL|\[31mnot ok)" "$output_file" 2>/dev/null || echo "0")
+        total=$((passed + failed))
+    fi
+
+    echo "$total,$passed,$failed,$skipped"
+}
+
+# Extract only failing test details from output
+# Arguments: $1 = output file path
+extract_failing_tests() {
+    local output_file="$1"
+
+    if [ ! -f "$output_file" ]; then
+        return 1
+    fi
+
+    # Bats/TAP format: Extract "not ok" lines and context
+    if grep -q "^not ok " "$output_file"; then
+        grep -A 5 "^not ok " "$output_file"
+        return 0
+    fi
+
+    # Jest format: Extract "FAIL" blocks
+    if grep -q "FAIL" "$output_file"; then
+        # Extract lines from FAIL markers to next blank line
+        awk '/FAIL/,/^$/' "$output_file"
+        return 0
+    fi
+
+    # Vitest format: Extract failure sections
+    if grep -q "FAIL" "$output_file"; then
+        awk '/FAIL/,/^$/' "$output_file"
+        return 0
+    fi
+
+    # Mocha format: Extract failing test blocks
+    if grep -q "failing" "$output_file"; then
+        # Extract from first failure marker onwards
+        sed -n '/failing/,$p' "$output_file"
+        return 0
+    fi
+
+    # Generic fallback: show lines with error indicators
+    grep -E "(Error|FAIL|✗|✘|not ok)" "$output_file" || echo "No detailed failure information available"
+}
+
+# Display test results based on TEST_OUTPUT_MODE
+# Arguments: $1 = output file path, $2 = success/failure status
+display_test_results() {
+    local output_file="$1"
+    local test_passed="$2"
+
+    if [ ! -f "$output_file" ]; then
+        log_warning "No test output file found"
+        return
+    fi
+
+    # Parse test statistics
+    local stats=$(parse_test_output "$output_file")
+    local total=$(echo "$stats" | cut -d',' -f1)
+    local passed=$(echo "$stats" | cut -d',' -f2)
+    local failed=$(echo "$stats" | cut -d',' -f3)
+    local skipped=$(echo "$stats" | cut -d',' -f4)
+
+    case "$TEST_OUTPUT_MODE" in
+        "full")
+            # Show everything (original behavior)
+            cat "$output_file"
+            ;;
+
+        "summary")
+            # Show only statistics
+            echo ""
+            echo "📊 Test Summary:"
+            echo "   Total:   $total tests"
+            echo "   Passed:  $passed ✅"
+            if [ "$failed" -gt 0 ]; then
+                echo "   Failed:  $failed ❌"
+            fi
+            if [ "$skipped" -gt 0 ]; then
+                echo "   Skipped: $skipped ⊘"
+            fi
+            echo ""
+            ;;
+
+        "failures"|*)
+            # Show summary + only failing tests (default)
+            echo ""
+            echo "📊 Test Summary:"
+            echo "   Total:   $total tests"
+            echo "   Passed:  $passed ✅"
+            if [ "$failed" -gt 0 ]; then
+                echo "   Failed:  $failed ❌"
+            fi
+            if [ "$skipped" -gt 0 ]; then
+                echo "   Skipped: $skipped ⊘"
+            fi
+            echo ""
+
+            if [ "$test_passed" != "true" ] && [ "$failed" -gt 0 ]; then
+                echo "❌ Failing Tests:"
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                extract_failing_tests "$output_file"
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                echo ""
+            fi
+            ;;
+    esac
+}
+
 # Run verification tests
 run_verification_tests() {
     log_info "Running code quality gates..."
@@ -1031,13 +1193,20 @@ run_verification_tests() {
     # Gate 4: Test Suite (MUST PASS if tests exist)
     log_info "🧪 Quality Gate 4/5: Test Suite"
     if [ -f "package.json" ] && grep -q '"test"' package.json; then
-        if ! npm test 2>&1 | tee /tmp/ralph_test.log; then
+        # Capture test output to file (don't display yet)
+        local test_exit_code=0
+        npm test > /tmp/ralph_test.log 2>&1 || test_exit_code=$?
+
+        # Display results based on TEST_OUTPUT_MODE
+        if [ $test_exit_code -ne 0 ]; then
             log_error "❌ FAILED: Test suite failed (BLOCKING)"
+            display_test_results "/tmp/ralph_test.log" "false"
             log_info "Fix failing tests before marking feature complete"
             quality_gate_results="${quality_gate_results}\n  ❌ Tests"
             tests_passed=false
         else
             log_success "✅ PASSED: Test suite"
+            display_test_results "/tmp/ralph_test.log" "true"
             quality_gate_results="${quality_gate_results}\n  ✅ Tests"
         fi
     else
