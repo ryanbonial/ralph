@@ -585,6 +585,33 @@
       "passes": true,
       "iterations_taken": 1,
       "blocked_reason": null
+    },
+    {
+      "id": "023",
+      "type": "bug",
+      "category": "quality",
+      "priority": "high",
+      "description": "Fix 'EOF: command not found' error on line 7 of ralph.sh",
+      "steps": [
+        "TDD RED: Write a failing test that reproduces the 'EOF: command not found' error",
+        "TDD RED: Run the test and verify it fails (demonstrates the bug exists)",
+        "Investigate ralph.sh line 7 and surrounding lines for syntax errors",
+        "Check for improperly quoted heredocs or command substitutions",
+        "Look for missing quotes, backticks, or closing delimiters near line 7",
+        "TDD GREEN: Fix the syntax error causing EOF to be interpreted as a command",
+        "TDD GREEN: Run the test and verify it now passes",
+        "Verify ralph.sh executes without errors: ./ralph.sh --help or similar",
+        "Add test case to prevent regression of this syntax error",
+        "Document the fix in progress.txt"
+      ],
+      "estimated_complexity": "small",
+      "depends_on": [
+        "020"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null,
+      "test_files": ["tests/ralph-syntax.bats"]
     }
   ],
   "notes": [
@@ -598,6 +625,7 @@
     "Feature 021 addresses the root cause: Ralph built without tests because tests weren't required",
     "After 021: Ralph will enforce test creation, preventing the 'no tests' problem from recurring",
     "Feature 022 enforces TDD (red-green) workflow for bug fixes: write failing test first, then fix",
+    "Feature 023 is HIGH priority bug: fix 'EOF: command not found' error in ralph.sh line 7",
     "Feature 001 adds auto-PR creation with GitHub CLI (reduced scope - 000a covers branch creation)",
     "Features 002-006 implement the remaining improvements from the analysis",
     "Feature 007 improves code quality of ralph.sh",
