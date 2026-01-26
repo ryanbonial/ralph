@@ -1014,7 +1014,7 @@ main() {
     else
         echo "║          Continuous AFK Mode           ║"
     fi
-    echo "╔════════════════════════════════════════╗"
+    echo "╚════════════════════════════════════════╝"
     echo ""
 
     check_prerequisites
