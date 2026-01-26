@@ -58,6 +58,14 @@ VERIFY_BEFORE_COMPLETE="${VERIFY_BEFORE_COMPLETE:-true}"
 # Automatically fix prettier formatting issues before verification
 AUTOFIX_PRETTIER="${AUTOFIX_PRETTIER:-true}"
 
+# Sanity CMS Configuration (Feature 013)
+# Configure Sanity project for PRD storage (used in Feature 014)
+SANITY_PROJECT_ID="${SANITY_PROJECT_ID:-}"
+SANITY_DATASET="${SANITY_DATASET:-production}"
+SANITY_TOKEN="${SANITY_TOKEN:-}"
+# PRD storage mode: "file" (default) or "sanity" (requires Feature 014)
+PRD_STORAGE="${PRD_STORAGE:-file}"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
