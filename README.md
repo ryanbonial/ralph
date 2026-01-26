@@ -632,23 +632,31 @@ Ralph supports storing your PRD (Product Requirements Document) in Sanity CMS in
 **Current Status:**
 
 - ✅ **Feature 013 (Complete)**: Sanity schema definitions created
-- ⏳ **Feature 014 (Planned)**: Sanity API integration for read/write operations
+- ✅ **Feature 014 (Complete)**: Sanity API integration for read/write operations
 - ⏳ **Feature 016 (Planned)**: Sanity Studio UI for PRD management
 
-**Configuration (Available in Feature 014):**
+**Configuration:**
 
 ```bash
 # Sanity project credentials
 export SANITY_PROJECT_ID="your-project-id"
-export SANITY_DATASET="production"
+export SANITY_DATASET="production"          # default: production
 export SANITY_TOKEN="your-write-token"
 
-# Storage mode: "file" (default) or "sanity" (requires Feature 014)
-export PRD_STORAGE="file"
+# Storage mode: "file" (default) or "sanity"
+export PRD_STORAGE="sanity"
 
-# Run Ralph with Sanity storage (when Feature 014 is implemented)
+# Run Ralph with Sanity as source of truth
 PRD_STORAGE=sanity ./ralph.sh
 ```
+
+**How It Works:**
+
+When `PRD_STORAGE=sanity`, Ralph:
+- Fetches PRD from Sanity using GROQ queries (no local file required)
+- Updates feature status directly in Sanity via mutations API
+- Uses Sanity as the single source of truth (no file syncing)
+- Validates authentication and connection on startup
 
 **Schema Files:**
 
@@ -658,17 +666,52 @@ The Sanity schema definitions are available in `.ralph/sanity/schemas/`:
 - `ralphFeature.js` - Individual feature schema
 - `index.js` - Schema exports
 
-**Migration Tool:**
+**Setup Instructions:**
 
-Convert your existing `.ralph/prd.json` to Sanity documents:
+1. **Deploy Schemas** (choose one method):
+   ```bash
+   # Option A: Using Sanity CLI (if you have a local Studio)
+   cd .ralph/sanity
+   sanity schema deploy
 
-```bash
-# Generate Sanity document JSON
-node .ralph/sanity/migrate.js > prd-document.json
+   # Option B: Using MCP tools (Claude Code with Sanity MCP)
+   # Use deploy_schema tool with schema files
 
-# Import to Sanity (requires Sanity CLI)
-sanity dataset import prd-document.json production --replace
-```
+   # Option C: Manual import via Sanity Studio
+   # Copy schema files to your Studio project
+   ```
+
+2. **Get API Token**:
+   - Go to https://sanity.io/manage
+   - Select your project
+   - Navigate to API → Tokens
+   - Create a token with "Editor" permissions
+   - Copy the token value
+
+3. **Configure Environment**:
+   ```bash
+   export SANITY_PROJECT_ID="abc123"
+   export SANITY_DATASET="production"
+   export SANITY_TOKEN="sk..."
+   export PRD_STORAGE="sanity"
+   ```
+
+4. **Migrate Your PRD**:
+   ```bash
+   # Generate Sanity document JSON
+   node .ralph/sanity/migrate.js > prd-document.json
+
+   # Import to Sanity (requires Sanity CLI)
+   sanity dataset import prd-document.json production --replace
+
+   # Or import via Sanity Studio's import UI
+   ```
+
+5. **Run Ralph**:
+   ```bash
+   # Ralph will now use Sanity as the source of truth
+   PRD_STORAGE=sanity ./ralph.sh
+   ```
 
 **Documentation:**
 
@@ -688,9 +731,11 @@ See `.ralph/sanity/README.md` for:
 
 **Next Steps:**
 
-1. Deploy schemas to your Sanity project (see `.ralph/sanity/README.md`)
-2. Wait for Feature 014 to enable `PRD_STORAGE=sanity` mode
-3. Optionally implement Sanity Studio UI (Feature 016)
+1. Deploy schemas to your Sanity project (see setup instructions above)
+2. Create an API token and configure environment variables
+3. Migrate your PRD using the migration script
+4. Run Ralph with `PRD_STORAGE=sanity`
+5. (Optional) Implement Sanity Studio UI for visual editing (Feature 016)
 
 ### Combine Options
 

@@ -90,6 +90,223 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# ==========================================
+# Sanity CMS Integration Functions (Feature 014)
+# ==========================================
+
+# Validate Sanity configuration
+validate_sanity_config() {
+    if [ -z "$SANITY_PROJECT_ID" ]; then
+        log_error "SANITY_PROJECT_ID not set. Required for PRD_STORAGE=sanity"
+        log_info "Set environment variable: export SANITY_PROJECT_ID=your-project-id"
+        return 1
+    fi
+
+    if [ -z "$SANITY_DATASET" ]; then
+        log_error "SANITY_DATASET not set. Required for PRD_STORAGE=sanity"
+        log_info "Set environment variable: export SANITY_DATASET=production"
+        return 1
+    fi
+
+    if [ -z "$SANITY_TOKEN" ]; then
+        log_error "SANITY_TOKEN not set. Required for PRD_STORAGE=sanity"
+        log_info "Create a token at: https://sanity.io/manage/project/$SANITY_PROJECT_ID/api"
+        log_info "Then set: export SANITY_TOKEN=your-token"
+        return 1
+    fi
+
+    return 0
+}
+
+# Fetch PRD from Sanity CMS
+fetch_prd_from_sanity() {
+    local api_url="https://${SANITY_PROJECT_ID}.api.sanity.io/v2021-10-21/data/query/${SANITY_DATASET}"
+
+    # GROQ query to fetch ralphProject document
+    local query='*[_type == "ralphProject"][0]'
+
+    log_info "Fetching PRD from Sanity: $SANITY_PROJECT_ID/$SANITY_DATASET"
+
+    local response=$(curl -s -f \
+        -H "Authorization: Bearer $SANITY_TOKEN" \
+        --get \
+        --data-urlencode "query=$query" \
+        "$api_url" 2>&1)
+
+    local curl_exit=$?
+
+    if [ $curl_exit -ne 0 ]; then
+        log_error "Failed to fetch PRD from Sanity (curl exit code: $curl_exit)"
+        log_error "Response: $response"
+        log_info "Check your SANITY_PROJECT_ID, SANITY_DATASET, and SANITY_TOKEN"
+        return 1
+    fi
+
+    # Extract result from response
+    local prd_doc=$(echo "$response" | python3 -c "
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    result = data.get('result')
+    if result:
+        print(json.dumps(result))
+    else:
+        sys.stderr.write('No result found in Sanity response\n')
+        sys.exit(1)
+except Exception as e:
+    sys.stderr.write(f'Error parsing Sanity response: {e}\n')
+    sys.exit(1)
+" 2>&1)
+
+    local py_exit=$?
+
+    if [ $py_exit -ne 0 ]; then
+        log_error "Failed to parse Sanity response"
+        log_error "Error: $prd_doc"
+        log_info "Ensure a ralphProject document exists in your Sanity dataset"
+        return 1
+    fi
+
+    if [ -z "$prd_doc" ] || [ "$prd_doc" = "null" ]; then
+        log_error "No ralphProject document found in Sanity"
+        log_info "Use the migration script to import your PRD: node .ralph/sanity/migrate.js"
+        return 1
+    fi
+
+    log_success "PRD fetched from Sanity successfully"
+    echo "$prd_doc"
+    return 0
+}
+
+# Update feature status in Sanity CMS
+update_prd_feature_in_sanity() {
+    local feature_id="$1"
+    local passes="$2"
+    local iterations_taken="$3"
+    local blocked_reason="$4"
+
+    if [ -z "$feature_id" ]; then
+        log_error "Feature ID required for update_prd_feature_in_sanity"
+        return 1
+    fi
+
+    local api_url="https://${SANITY_PROJECT_ID}.api.sanity.io/v2021-10-21/data/mutate/${SANITY_DATASET}"
+
+    log_info "Updating feature $feature_id in Sanity..."
+
+    # First, fetch the document to get its _id
+    local doc_query='*[_type == "ralphProject"][0]{_id, features}'
+    local doc_response=$(curl -s -f \
+        -H "Authorization: Bearer $SANITY_TOKEN" \
+        --get \
+        --data-urlencode "query=$doc_query" \
+        "https://${SANITY_PROJECT_ID}.api.sanity.io/v2021-10-21/data/query/${SANITY_DATASET}")
+
+    if [ $? -ne 0 ]; then
+        log_error "Failed to fetch document for update"
+        return 1
+    fi
+
+    # Build the mutation JSON
+    local mutation=$(python3 -c "
+import json, sys
+
+doc_response = '''$doc_response'''
+feature_id = '$feature_id'
+passes = '$passes'
+iterations_taken = '$iterations_taken'
+blocked_reason = '''$blocked_reason'''
+
+try:
+    data = json.loads(doc_response)
+    result = data.get('result')
+
+    if not result:
+        sys.stderr.write('No document found\n')
+        sys.exit(1)
+
+    doc_id = result.get('_id')
+    features = result.get('features', [])
+
+    # Find feature index
+    feature_idx = None
+    for idx, f in enumerate(features):
+        if f.get('id') == feature_id:
+            feature_idx = idx
+            break
+
+    if feature_idx is None:
+        sys.stderr.write(f'Feature {feature_id} not found\n')
+        sys.exit(1)
+
+    # Build Sanity mutation
+    mutations = {
+        'mutations': [
+            {
+                'patch': {
+                    'id': doc_id,
+                    'set': {
+                        f'features[{feature_idx}].passes': passes.lower() == 'true',
+                        f'features[{feature_idx}].iterations_taken': int(iterations_taken)
+                    }
+                }
+            }
+        ]
+    }
+
+    # Add blocked_reason if provided
+    if blocked_reason and blocked_reason != 'null':
+        mutations['mutations'][0]['patch']['set'][f'features[{feature_idx}].blocked_reason'] = blocked_reason
+    else:
+        mutations['mutations'][0]['patch']['unset'] = [f'features[{feature_idx}].blocked_reason']
+
+    print(json.dumps(mutations))
+except Exception as e:
+    sys.stderr.write(f'Error building mutation: {e}\n')
+    sys.exit(1)
+")
+
+    if [ $? -ne 0 ]; then
+        log_error "Failed to build mutation"
+        log_error "$mutation"
+        return 1
+    fi
+
+    # Execute mutation
+    local response=$(curl -s -f \
+        -X POST \
+        -H "Authorization: Bearer $SANITY_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d "$mutation" \
+        "$api_url")
+
+    if [ $? -ne 0 ]; then
+        log_error "Failed to update feature in Sanity"
+        log_error "Response: $response"
+        return 1
+    fi
+
+    log_success "Feature $feature_id updated in Sanity"
+    return 0
+}
+
+# Get PRD data (from file or Sanity based on PRD_STORAGE)
+get_prd_data() {
+    if [ "$PRD_STORAGE" = "sanity" ]; then
+        fetch_prd_from_sanity
+    else
+        if [ ! -f "$PRD_FILE" ]; then
+            log_error "PRD file not found: $PRD_FILE"
+            return 1
+        fi
+        cat "$PRD_FILE"
+    fi
+}
+
+# ==========================================
+# End Sanity Integration Functions
+# ==========================================
+
 # Check if current branch is protected
 is_protected_branch() {
     local current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
@@ -132,19 +349,21 @@ suggest_feature_branch() {
 
 # Get next feature from PRD (highest priority incomplete feature with met dependencies)
 get_next_feature_from_prd() {
-    if [ ! -f "$PRD_FILE" ]; then
+    # Get PRD data from file or Sanity
+    local prd_data=$(get_prd_data)
+
+    if [ $? -ne 0 ] || [ -z "$prd_data" ]; then
         echo ""
         return 1
     fi
 
     # Use Python to parse JSON and find next feature
-    python3 -c "
+    echo "$prd_data" | python3 -c "
 import json
 import sys
 
 try:
-    with open('$PRD_FILE', 'r') as f:
-        prd = json.load(f)
+    prd = json.load(sys.stdin)
 
     features = prd.get('features', [])
 
@@ -314,9 +533,25 @@ check_prerequisites() {
         exit 1
     fi
 
-    if [ ! -f "$PRD_FILE" ]; then
-        log_error "PRD file not found: $PRD_FILE"
-        exit 1
+    # Validate PRD storage configuration
+    if [ "$PRD_STORAGE" = "sanity" ]; then
+        log_info "PRD_STORAGE=sanity: Using Sanity CMS as source of truth"
+        if ! validate_sanity_config; then
+            log_error "Sanity configuration invalid"
+            exit 1
+        fi
+        # Test connection by fetching PRD
+        if ! get_prd_data > /dev/null; then
+            log_error "Failed to fetch PRD from Sanity"
+            exit 1
+        fi
+        log_success "Sanity connection verified"
+    else
+        # Default file-based storage
+        if [ ! -f "$PRD_FILE" ]; then
+            log_error "PRD file not found: $PRD_FILE"
+            exit 1
+        fi
     fi
 
     if [ ! -f "$PROGRESS_FILE" ]; then
@@ -340,7 +575,23 @@ check_prerequisites() {
 
 # Check if all features are complete
 check_completion() {
-    local incomplete_count=$(grep -c '"passes": false' "$PRD_FILE" || true)
+    local prd_data=$(get_prd_data)
+
+    if [ $? -ne 0 ]; then
+        log_error "Failed to get PRD data"
+        return 1
+    fi
+
+    local incomplete_count=$(echo "$prd_data" | python3 -c "
+import json, sys
+try:
+    prd = json.load(sys.stdin)
+    features = prd.get('features', [])
+    incomplete = sum(1 for f in features if not f.get('passes', False))
+    print(incomplete)
+except:
+    print('0')
+")
 
     if [ "$incomplete_count" -eq 0 ]; then
         log_success "All features complete!"

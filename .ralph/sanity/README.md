@@ -141,7 +141,7 @@ export SANITY_DATASET="production"
 export SANITY_TOKEN="your-write-token"
 
 # PRD storage mode (file | sanity)
-export PRD_STORAGE="file"  # Will be "sanity" in feature 014
+export PRD_STORAGE="sanity"  # Use Sanity as source of truth
 ```
 
 To find your project ID:
@@ -151,15 +151,41 @@ To find your project ID:
 
 ## Current Status
 
-**Feature 013**: ✅ Schema created (this feature)
+**Feature 013**: ✅ Schema created
 - Sanity schemas are defined and ready to deploy
 - Migration script is available
-- Configuration placeholders added to ralph.sh
+- Configuration added to ralph.sh
 
-**Feature 014**: ⏳ Not yet implemented
-- Will add actual Sanity API integration
-- Will implement read/write operations from ralph.sh
-- Will enable PRD_STORAGE="sanity" mode
+**Feature 014**: ✅ Sanity API integration complete
+- PRD can be fetched from Sanity using GROQ queries
+- Feature status updates via Sanity mutations API
+- `PRD_STORAGE=sanity` mode fully functional
+- Authentication and error handling implemented
+- No local file syncing - Sanity is the single source of truth
+
+## How Sanity Integration Works
+
+When `PRD_STORAGE=sanity`, Ralph operates as follows:
+
+**1. Startup Validation**:
+- Validates SANITY_PROJECT_ID, SANITY_DATASET, and SANITY_TOKEN are set
+- Tests connection by fetching PRD from Sanity
+- Fails fast if configuration is invalid or connection fails
+
+**2. PRD Fetching**:
+- Uses GROQ query: `*[_type == "ralphProject"][0]`
+- Fetches complete PRD document including all features
+- No local file caching - always fetches fresh data
+
+**3. Feature Updates** (by Agent):
+- Agent modifies PRD data in Sanity directly
+- Uses Sanity mutations API to update feature status
+- Updates `passes`, `iterations_taken`, and `blocked_reason` fields
+- Changes are immediately visible to all Ralph instances
+
+**4. API Endpoints Used**:
+- **Query API**: `https://{projectId}.api.sanity.io/v2021-10-21/data/query/{dataset}`
+- **Mutations API**: `https://{projectId}.api.sanity.io/v2021-10-21/data/mutate/{dataset}`
 
 ## Testing the Schema
 
@@ -176,9 +202,11 @@ node .ralph/sanity/migrate.js .ralph/prd.json
 ## Next Steps
 
 1. **Deploy schemas** to your Sanity project using one of the options above
-2. **Test migration** by running the migrate script
-3. **Wait for Feature 014** which will enable Ralph to read/write directly to Sanity
-4. **Optional**: Implement Sanity Studio UI (Feature 016)
+2. **Create API token** with Editor permissions at https://sanity.io/manage
+3. **Migrate your PRD** using the migration script
+4. **Configure environment** with SANITY_PROJECT_ID, SANITY_DATASET, SANITY_TOKEN
+5. **Run Ralph** with `PRD_STORAGE=sanity` to use Sanity as source of truth
+6. **Optional**: Implement Sanity Studio UI for visual editing (Feature 016)
 
 ## Resources
 
