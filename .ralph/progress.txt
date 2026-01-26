@@ -537,3 +537,61 @@ Notes for next iteration:
 - Features 004, 008, 009 remain blocked by dependencies
 ---
 
+
+--- 2026-01-26 (Feature 022) ---
+Feature: 022 - Enforce TDD red-green workflow for bug fixes
+Status: Completed
+Type: feature
+Complexity: small
+
+Implementation:
+- Updated AGENT_PROMPT.md section 4 "Plan Your Implementation" for bug type
+  * Added CRITICAL TDD Red-Green Workflow requirement
+  * Step 1: Write Failing Test First (RED) - reproduce bug before fixing
+  * Step 2: Verify Test Fails - confirm test fails with expected error
+  * Step 3: Fix the Bug - implement minimal fix to make test pass
+  * Step 4: Verify Test Passes (GREEN) - confirm fix resolves the bug
+  * Added planning questions emphasizing test-first approach
+- Updated AGENT_PROMPT.md section 6 "Test Thoroughly" for bug type
+  * Replaced simple "write regression test" with full TDD workflow
+  * Added 6-step RED-GREEN process with documentation requirement
+  * Emphasizes documenting RED → GREEN transition in progress.txt
+- Updated AGENT_PROMPT.md Quality Gate Checklist (Gate 5)
+  * Changed bug type from "write regression tests" to "follow TDD"
+  * Added explicit RED-GREEN verification requirement
+- Updated AGENT_PROMPT.md Quality Gates section (Gate 5 details)
+  * Expanded bug type with 4-step TDD workflow
+  * Clarified that regression test prevents bug from returning
+- Updated README.md Quality Gate 5 section
+  * Changed bug type to emphasize TDD Red-Green workflow
+  * Added 4-step numbered workflow for bug fixes
+- Added comprehensive "TDD Red-Green Workflow for Bug Fixes" section to README.md
+  * Added detailed 4-step workflow with emojis (RED, Verify RED, Fix, GREEN)
+  * Added "Why TDD for Bugs?" section with 5 key benefits
+  * Added practical example showing bash commands and test output
+  * Emphasized workflow is mandatory for type='bug' features
+  * Placed after "Why This Matters" section for logical flow
+
+Testing:
+- ✅ Bash syntax validation passed: bash -n ralph.sh
+- ✅ All 55 tests pass: npm test exits 0
+- ✅ No code changes to ralph.sh (documentation only)
+- ✅ Documentation changes verified via git diff
+
+Key Files Modified:
+- AGENT_PROMPT.md: Updated sections 4 and 6 with TDD workflow (lines 106-122, 139-149, 208, 236-241)
+- README.md: Updated Quality Gate 5 and added TDD section (lines 421-428, 458-510)
+- .ralph/prd.json: Marked feature 022 as complete with iterations_taken=1
+
+Challenges:
+- None - straightforward documentation update
+- Changes reinforce test-first methodology for bug fixes
+
+Notes for next iteration:
+- Feature 022 is now complete
+- Ralph now enforces TDD Red-Green workflow for all bug fixes
+- Agents must write failing tests BEFORE fixing bugs
+- This ensures bugs are reproducible and fixes are verified
+- Documentation includes practical example for clarity
+- Next features available: 001, 002, 003, 005, 006, 007, 011, 012, 016, 018, 019
+---

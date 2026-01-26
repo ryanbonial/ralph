@@ -105,9 +105,27 @@ Briefly outline based on feature type:
 
 **For `bug` type:**
 
-- What is the root cause?
+**CRITICAL - TDD Red-Green Workflow Required:**
+
+Bug fixes MUST follow Test-Driven Development (TDD) approach:
+
+1. **Write Failing Test First (RED)**: Before touching any code, write a test that reproduces the bug
+   - The test should fail when run against the current buggy code
+   - This proves the bug is real and reproducible
+2. **Verify Test Fails**: Run the test and confirm it fails with the expected error
+   - If the test passes, you haven't reproduced the bug correctly
+   - Document what the failing test output shows
+3. **Fix the Bug**: Now implement the minimal fix to make the test pass
+   - Focus on fixing only what's needed for the test to pass
+4. **Verify Test Passes (GREEN)**: Run the test again and confirm it now passes
+   - This proves your fix actually resolves the bug
+   - The test now serves as a regression test to prevent the bug from returning
+
+**Planning Questions:**
+- What is the root cause of the bug?
+- What test will demonstrate the broken behavior?
 - What files need to be fixed?
-- How to verify the bug is resolved?
+- How will the test verify the bug is resolved?
 
 **For `refactor` type:**
 
@@ -137,7 +155,13 @@ Write clean, well-documented code:
 **IMPORTANT - Test Creation Requirements by Type:**
 
 - **For `feature` type**: You MUST write new tests for the functionality. Features cannot be marked complete without tests.
-- **For `bug` type**: You MUST write a regression test that would have caught the bug. This prevents the bug from returning.
+- **For `bug` type**: You MUST follow TDD Red-Green workflow:
+  1. **RED**: Write a failing test that reproduces the bug BEFORE making any fixes
+  2. **Verify RED**: Run the test and confirm it fails (proves bug exists)
+  3. **Fix**: Implement the minimal fix for the bug
+  4. **GREEN**: Run the test and confirm it now passes (proves fix works)
+  5. This creates a regression test that prevents the bug from returning
+  6. **Document in progress.txt**: Include test output showing RED → GREEN transition
 - **For `refactor` type**: You MUST ensure existing tests pass. Run the full test suite to prove behavior is unchanged.
 - **For `test` type**: You are writing tests, so this is the implementation itself.
 
@@ -181,7 +205,7 @@ npm test  # or pnpm test, or pytest, or cargo test
 
 # 5. Test coverage (MUST have tests for feature/bug types)
 # For type='feature': You MUST write new tests for the functionality
-# For type='bug': You MUST write regression tests
+# For type='bug': You MUST follow TDD (write failing test, verify RED, fix, verify GREEN)
 # For type='refactor': Existing tests must pass (no new tests required)
 # For type='test': You are writing tests (this is the work)
 ```
@@ -209,7 +233,12 @@ npm test  # or pnpm test, or pytest, or cargo test
 
 5. **Test Coverage**: New tests MUST be written (for feature/bug types)
    - **feature type**: MUST write tests for new functionality - feature CANNOT pass without tests
-   - **bug type**: MUST write regression test to prevent bug from returning
+   - **bug type**: MUST follow TDD Red-Green workflow
+     - Write failing test first (RED)
+     - Verify test fails before making any fixes
+     - Fix the bug
+     - Verify test passes (GREEN)
+     - This regression test prevents the bug from returning
    - **refactor type**: Existing tests must pass - no new tests required (tests prove behavior unchanged)
    - **test type**: You are writing tests - this is the implementation
    - Check PRD's optional `test_files` field - if specified, those files must exist and contain tests
