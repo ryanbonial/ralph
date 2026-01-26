@@ -123,7 +123,9 @@
       "passes": true,
       "iterations_taken": 1,
       "blocked_reason": null,
-      "test_files": ["tests/ralph-acceptance-criteria.bats"]
+      "test_files": [
+        "tests/ralph-acceptance-criteria.bats"
+      ]
     },
     {
       "id": "004",
@@ -216,7 +218,9 @@
       "passes": true,
       "iterations_taken": 1,
       "blocked_reason": null,
-      "test_files": ["tests/ralph-logging.bats"]
+      "test_files": [
+        "tests/ralph-logging.bats"
+      ]
     },
     {
       "id": "008",
@@ -324,7 +328,9 @@
       "passes": true,
       "iterations_taken": 1,
       "blocked_reason": null,
-      "test_files": ["tests/ralph-test-output.bats"]
+      "test_files": [
+        "tests/ralph-test-output.bats"
+      ]
     },
     {
       "id": "012",
@@ -360,7 +366,9 @@
       "passes": true,
       "iterations_taken": 1,
       "blocked_reason": null,
-      "test_files": ["tests/ralph-docker.bats"]
+      "test_files": [
+        "tests/ralph-docker.bats"
+      ]
     },
     {
       "id": "013",
@@ -487,7 +495,7 @@
       "id": "019",
       "type": "feature",
       "category": "infrastructure",
-      "priority": "medium",
+      "priority": "high",
       "description": "Add Cursor Planning Mode helper/converter for PRD generation",
       "steps": [
         "Create PLANNING_TO_PRD.md guide explaining the planning-to-execution workflow",
@@ -502,8 +510,8 @@
       ],
       "estimated_complexity": "small",
       "depends_on": [],
-      "passes": false,
-      "iterations_taken": 0,
+      "passes": true,
+      "iterations_taken": 1,
       "blocked_reason": null
     },
     {
@@ -611,7 +619,9 @@
       "passes": false,
       "iterations_taken": 1,
       "blocked_reason": "Bug does not exist: Comprehensive testing shows no 'EOF: command not found' error in ralph.sh. Created tests/ralph-syntax.bats with 10 tests (all pass) to prevent regression. Line 7 is blank, no syntax errors found anywhere. Needs clarification on how to reproduce the reported error.",
-      "test_files": ["tests/ralph-syntax.bats"]
+      "test_files": [
+        "tests/ralph-syntax.bats"
+      ]
     }
   ],
   "notes": [

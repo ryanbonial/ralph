@@ -167,6 +167,68 @@ Then use `ralph` from any project directory!
    RUN_MODE=continuous ./ralph.sh
    ```
 
+## 🧭 Planning Mode → Ralph Workflow (Recommended)
+
+For complex projects, use **Cursor Planning Mode** to design the architecture, then convert that plan into a Ralph-compatible PRD for execution.
+
+### Why This Approach?
+
+| Phase | Tool | Purpose |
+|-------|------|---------|
+| **Planning** | Cursor Planning Mode | Think, design, architect, decide *what* to build |
+| **Execution** | Ralph | Build, test, commit, verify *one feature at a time* |
+
+**Key Benefits:**
+- 🎯 **Planning Mode** maintains full project context for architecture decisions
+- ⚡ **Ralph Mode** executes incrementally with fresh context per feature
+- 🔄 **Best of Both**: Strategic thinking + tactical implementation
+
+### Quick Workflow
+
+1. **Use Planning Mode to generate feature list**:
+
+   In Cursor, enter Planning Mode with this prompt:
+
+   ```
+   I need help planning [PROJECT DESCRIPTION].
+
+   Break this into features following Ralph PRD structure:
+   - id: 3-digit number (001, 002, etc.)
+   - type: feature/bug/refactor/test/spike
+   - category: setup/infrastructure/functional/testing/quality/documentation
+   - priority: critical/high/medium/low
+   - description: Clear 1-sentence description
+   - steps: 5-10 concrete implementation steps
+   - estimated_complexity: small/medium/large
+   - depends_on: Array of prerequisite feature IDs
+   - test_files: Expected test file paths
+
+   Output in a format easy to convert to JSON.
+   ```
+
+2. **Convert planning output to `.ralph/prd.json`**:
+   - Use `.ralph/prd.json.template` as reference
+   - Structure planning output as valid JSON
+   - Validate with: `python3 -m json.tool .ralph/prd.json`
+
+3. **Run Ralph** to execute the plan:
+   ```bash
+   ./ralph.sh  # Execute features one by one
+   ```
+
+### Full Guide
+
+See **[PLANNING_TO_PRD.md](PLANNING_TO_PRD.md)** for:
+- Complete step-by-step workflow
+- Prompt templates for Planning Mode
+- Examples of plan → PRD conversion
+- Best practices for granularity, dependencies, complexity
+- Troubleshooting common issues
+
+**TL;DR:** Planning Mode designs the roadmap, Ralph builds it incrementally.
+
+---
+
 ## 🎓 How It Works
 
 ### Two Phases
