@@ -58,6 +58,11 @@ VERIFY_BEFORE_COMPLETE="${VERIFY_BEFORE_COMPLETE:-true}"
 # Automatically fix prettier formatting issues before verification
 AUTOFIX_PRETTIER="${AUTOFIX_PRETTIER:-true}"
 
+# Test Coverage Configuration (Feature 021)
+# Require test files for feature and bug types (default: true)
+# When true, features of type 'feature' or 'bug' cannot be marked complete without tests
+TEST_REQUIRED_FOR_FEATURES="${TEST_REQUIRED_FOR_FEATURES:-true}"
+
 # Sanity CMS Configuration (Feature 013)
 # Configure Sanity project for PRD storage (used in Feature 014)
 SANITY_PROJECT_ID="${SANITY_PROJECT_ID:-}"
@@ -615,7 +620,7 @@ run_verification_tests() {
     # Gate 1: Code Formatting (Prettier/Black/etc)
     if [ -f "package.json" ]; then
         if grep -q '"format:check"' package.json || grep -q '"prettier"' package.json; then
-            log_info "🎨 Quality Gate 1/4: Code Formatting"
+            log_info "🎨 Quality Gate 1/5: Code Formatting"
 
             # Auto-fix if enabled
             if [ "$AUTOFIX_PRETTIER" = "true" ]; then
@@ -655,7 +660,7 @@ run_verification_tests() {
     fi
 
     # Gate 2: Linting (MUST PASS - blocking)
-    log_info "🔍 Quality Gate 2/4: Linting"
+    log_info "🔍 Quality Gate 2/5: Linting"
     if [ -f "package.json" ] && grep -q '"lint"' package.json; then
         if ! npm run lint 2>&1 | tee /tmp/ralph_lint.log; then
             log_error "❌ FAILED: Linting errors detected (BLOCKING)"
@@ -673,7 +678,7 @@ run_verification_tests() {
     echo ""
 
     # Gate 3: Type Checking (MUST PASS if configured)
-    log_info "🔎 Quality Gate 3/4: Type Checking"
+    log_info "🔎 Quality Gate 3/5: Type Checking"
     if [ -f "package.json" ] && grep -q '"typecheck"' package.json; then
         if ! npm run typecheck 2>&1 | tee /tmp/ralph_typecheck.log; then
             log_error "❌ FAILED: Type checking errors detected (BLOCKING)"
@@ -705,7 +710,7 @@ run_verification_tests() {
     echo ""
 
     # Gate 4: Test Suite (MUST PASS if tests exist)
-    log_info "🧪 Quality Gate 4/4: Test Suite"
+    log_info "🧪 Quality Gate 4/5: Test Suite"
     if [ -f "package.json" ] && grep -q '"test"' package.json; then
         if ! npm test 2>&1 | tee /tmp/ralph_test.log; then
             log_error "❌ FAILED: Test suite failed (BLOCKING)"
@@ -719,6 +724,109 @@ run_verification_tests() {
     else
         log_info "⊘ SKIPPED: No tests configured"
         quality_gate_results="${quality_gate_results}\n  ⊘ Tests (not configured)"
+    fi
+    echo ""
+
+    # Gate 5: Test Coverage (MUST have tests for feature/bug types)
+    log_info "📋 Quality Gate 5/5: Test Coverage"
+    if [ "$TEST_REQUIRED_FOR_FEATURES" = "true" ]; then
+        # Get the current feature being worked on
+        local prd_content=$(get_prd_data)
+        local feature_type=$(echo "$prd_content" | python3 -c "
+import sys, json
+prd = json.load(sys.stdin)
+for feature in prd.get('features', []):
+    if not feature.get('passes', False):
+        blocked = feature.get('blocked_reason')
+        if blocked is None or blocked == '':
+            depends_on = feature.get('depends_on', [])
+            all_deps_met = True
+            for dep_id in depends_on:
+                dep_complete = any(f.get('id') == dep_id and f.get('passes', False) for f in prd.get('features', []))
+                if not dep_complete:
+                    all_deps_met = False
+                    break
+            if all_deps_met:
+                print(feature.get('type', 'feature'))
+                break
+" 2>/dev/null)
+
+        local test_files=$(echo "$prd_content" | python3 -c "
+import sys, json
+prd = json.load(sys.stdin)
+for feature in prd.get('features', []):
+    if not feature.get('passes', False):
+        blocked = feature.get('blocked_reason')
+        if blocked is None or blocked == '':
+            depends_on = feature.get('depends_on', [])
+            all_deps_met = True
+            for dep_id in depends_on:
+                dep_complete = any(f.get('id') == dep_id and f.get('passes', False) for f in prd.get('features', []))
+                if not dep_complete:
+                    all_deps_met = False
+                    break
+            if all_deps_met:
+                test_files = feature.get('test_files', [])
+                if test_files:
+                    for tf in test_files:
+                        print(tf)
+                break
+" 2>/dev/null)
+
+        if [ "$feature_type" = "feature" ] || [ "$feature_type" = "bug" ]; then
+            if [ -n "$test_files" ]; then
+                # Check if specified test files exist
+                local missing_files=""
+                for test_file in $test_files; do
+                    if [ ! -f "$test_file" ]; then
+                        missing_files="${missing_files}\n    - $test_file"
+                    fi
+                done
+
+                if [ -n "$missing_files" ]; then
+                    log_error "❌ FAILED: Required test files missing (BLOCKING)"
+                    log_info "Feature type '$feature_type' requires tests. Missing files:${missing_files}"
+                    log_info "Create these test files before marking feature complete"
+                    quality_gate_results="${quality_gate_results}\n  ❌ Test Coverage"
+                    tests_passed=false
+                else
+                    log_success "✅ PASSED: All required test files exist"
+                    quality_gate_results="${quality_gate_results}\n  ✅ Test Coverage"
+                fi
+            else
+                # No test_files specified - check if any test files exist in tests/ directory
+                if [ -d "tests" ]; then
+                    local test_count=$(find tests -name "*.bats" -o -name "*.test.js" -o -name "*.test.ts" -o -name "*.spec.js" -o -name "*.spec.ts" 2>/dev/null | wc -l)
+                    if [ "$test_count" -gt 0 ]; then
+                        log_success "✅ PASSED: Test files found (${test_count} test files in tests/)"
+                        quality_gate_results="${quality_gate_results}\n  ✅ Test Coverage"
+                    else
+                        log_warning "⚠️  WARNING: Feature type '$feature_type' should have tests"
+                        log_info "Consider adding 'test_files' field to PRD to specify required test files"
+                        log_info "Or add test files to tests/ directory"
+                        quality_gate_results="${quality_gate_results}\n  ⚠️  Test Coverage (no test_files specified)"
+                        # Don't fail, just warn - backward compatible
+                    fi
+                else
+                    log_warning "⚠️  WARNING: Feature type '$feature_type' should have tests"
+                    log_info "Consider adding test files or specifying 'test_files' in PRD"
+                    quality_gate_results="${quality_gate_results}\n  ⚠️  Test Coverage (no tests/ directory)"
+                    # Don't fail, just warn - backward compatible
+                fi
+            fi
+        elif [ "$feature_type" = "refactor" ]; then
+            log_success "✅ PASSED: Refactor type - existing tests prove behavior unchanged"
+            quality_gate_results="${quality_gate_results}\n  ✅ Test Coverage (refactor)"
+        elif [ "$feature_type" = "test" ]; then
+            log_success "✅ PASSED: Test type - implementation is the tests"
+            quality_gate_results="${quality_gate_results}\n  ✅ Test Coverage (test type)"
+        else
+            log_info "⊘ SKIPPED: Test coverage check for type '$feature_type'"
+            quality_gate_results="${quality_gate_results}\n  ⊘ Test Coverage (type: $feature_type)"
+        fi
+    else
+        log_info "⊘ SKIPPED: TEST_REQUIRED_FOR_FEATURES is disabled"
+        quality_gate_results="${quality_gate_results}\n  ⊘ Test Coverage (disabled)"
     fi
     echo ""
 

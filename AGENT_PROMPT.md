@@ -134,6 +134,15 @@ Write clean, well-documented code:
 
 **This is critical.** You MUST verify the feature works end-to-end:
 
+**IMPORTANT - Test Creation Requirements by Type:**
+
+- **For `feature` type**: You MUST write new tests for the functionality. Features cannot be marked complete without tests.
+- **For `bug` type**: You MUST write a regression test that would have caught the bug. This prevents the bug from returning.
+- **For `refactor` type**: You MUST ensure existing tests pass. Run the full test suite to prove behavior is unchanged.
+- **For `test` type**: You are writing tests, so this is the implementation itself.
+
+**If your feature type is `feature` or `bug`, writing tests is NOT optional - it is a requirement for completion.**
+
 #### For Web Applications:
 
 - Use browser automation tools (Puppeteer, Playwright)
@@ -141,11 +150,13 @@ Write clean, well-documented code:
 - Take screenshots if needed
 - Verify UI appearance and behavior
 - Test edge cases and error states
+- **Write automated tests** (unit/integration/e2e) for new functionality
 
 #### For Backend/APIs:
 
-- Write or run unit tests
-- Test API endpoints with realistic data
+- Write unit tests for new functions and logic
+- Write integration tests for API endpoints with realistic data
+- Test error responses and edge cases
 - Verify error responses
 - Check logging and monitoring
 
@@ -167,6 +178,12 @@ npm run typecheck  # or tsc --noEmit, or pnpm typecheck, or mypy
 
 # 4. Test suite (MUST pass)
 npm test  # or pnpm test, or pytest, or cargo test
+
+# 5. Test coverage (MUST have tests for feature/bug types)
+# For type='feature': You MUST write new tests for the functionality
+# For type='bug': You MUST write regression tests
+# For type='refactor': Existing tests must pass (no new tests required)
+# For type='test': You are writing tests (this is the work)
 ```
 
 **CRITICAL - Quality Gates:**
@@ -187,8 +204,16 @@ npm test  # or pnpm test, or pytest, or cargo test
 
 4. **Tests**: All tests MUST pass
    - Existing tests must not break
-   - New functionality should have tests
-   - Edge cases should be covered
+   - Test suite must run successfully
+   - No failing tests allowed
+
+5. **Test Coverage**: New tests MUST be written (for feature/bug types)
+   - **feature type**: MUST write tests for new functionality - feature CANNOT pass without tests
+   - **bug type**: MUST write regression test to prevent bug from returning
+   - **refactor type**: Existing tests must pass - no new tests required (tests prove behavior unchanged)
+   - **test type**: You are writing tests - this is the implementation
+   - Check PRD's optional `test_files` field - if specified, those files must exist and contain tests
+   - Ralph will verify test files exist and block completion if missing
 
 **DO NOT mark a feature as passing without ALL quality checks passing.**
 

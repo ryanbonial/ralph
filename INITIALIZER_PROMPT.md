@@ -68,7 +68,8 @@ Create a detailed `.ralph/prd.json` file by breaking down the user requirements 
       "depends_on": [],
       "passes": false,
       "iterations_taken": 0,
-      "blocked_reason": null
+      "blocked_reason": null,
+      "test_files": []
     }
   ]
 }
@@ -101,6 +102,17 @@ Create a detailed `.ralph/prd.json` file by breaking down the user requirements 
 - Use `depends_on` array to specify which features must be complete first
 - Example: Feature "005" (delete todo) depends on ["001" (create todo), "002" (display todos)]
 - Keep dependency chains reasonable (avoid deeply nested dependencies)
+
+**Test Files (Optional but Recommended):**
+
+- Use `test_files` array to specify test files that must exist for the feature to pass
+- Example: `"test_files": ["tests/auth.test.js", "tests/user.test.js"]`
+- Ralph will verify these files exist before marking the feature complete
+- **For `feature` type**: Strongly recommend specifying test files - features require tests
+- **For `bug` type**: Should specify regression test file
+- **For `refactor` type**: Leave empty - existing tests prove behavior unchanged
+- **For `test` type**: These are the implementation - may list the test files being created
+- If not specified, Ralph will warn but not fail (backward compatible)
 
 **Examples of Good Features:**
 
