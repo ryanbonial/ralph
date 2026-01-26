@@ -271,6 +271,8 @@ fetch_prd_from_sanity() {
     log_info "Fetching PRD from Sanity: $SANITY_PROJECT_ID/$SANITY_DATASET"
 
     local response=$(curl -s -f \
+        --connect-timeout 10 \
+        --max-time 30 \
         -H "Authorization: Bearer $SANITY_TOKEN" \
         --get \
         --data-urlencode "query=$query" \
@@ -340,6 +342,8 @@ update_prd_feature_in_sanity() {
     # First, fetch the document to get its _id
     local doc_query='*[_type == "ralphProject"][0]{_id, features}'
     local doc_response=$(curl -s -f \
+        --connect-timeout 10 \
+        --max-time 30 \
         -H "Authorization: Bearer $SANITY_TOKEN" \
         --get \
         --data-urlencode "query=$doc_query" \
@@ -417,6 +421,8 @@ except Exception as e:
 
     # Execute mutation
     local response=$(curl -s -f \
+        --connect-timeout 10 \
+        --max-time 30 \
         -X POST \
         -H "Authorization: Bearer $SANITY_TOKEN" \
         -H "Content-Type: application/json" \
@@ -1679,5 +1685,7 @@ main() {
     run_ralph_loop
 }
 
-# Run main function
-main "$@"
+# Run main function only if script is executed directly (not sourced)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi
