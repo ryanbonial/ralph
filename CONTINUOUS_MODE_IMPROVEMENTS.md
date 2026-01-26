@@ -114,70 +114,164 @@ Safety note: Ralph prevents git push by default. To enable:
   ALLOW_GIT_PUSH=true ./ralph.sh
 ```
 
-## Solution 3: Docker Setup for Safe Continuous Mode
+## Solution 3: Docker Setup for Safe Continuous Mode (✅ IMPLEMENTED)
 
-### Quick Start Docker Wrapper
+Ralph now includes `ralph-docker.sh` - a production-ready Docker wrapper for completely sandboxed execution.
 
-Create `ralph-docker.sh`:
+### Why Use Docker?
+
+**Security Benefits:**
+- ✅ **Isolated Environment**: Ralph runs in a container with NO access to your host system
+- ✅ **Volume-Only Access**: Only your project directory and read-only .cursor config are mounted
+- ✅ **No Permission Prompts**: Docker bypasses IDE permission systems entirely
+- ✅ **Clean Interrupts**: `docker stop` or CTRL-C works cleanly (no double CTRL-C issue)
+- ✅ **Reproducible Environment**: Same Ubuntu 22.04 base, Node.js 20.x, Python 3, jq on every run
+
+**When to Use:**
+- Running Ralph overnight or on remote servers
+- Maximum security for untrusted/experimental code
+- Avoiding permission prompt interruptions in continuous mode
+- Ensuring consistent environment across different machines
+
+### Quick Start
 
 ```bash
-#!/bin/bash
-# Run Ralph in Docker container for safe continuous mode
-
-# Build image if not exists
-if ! docker images | grep -q "ralph-env"; then
-    echo "Building Ralph Docker environment..."
-    docker build -t ralph-env -f- . <<'EOF'
-FROM ubuntu:22.04
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    ca-certificates \
-    gnupg \
-    lsb-release \
-    python3 \
-    python3-pip \
-    jq
-
-# Install Node.js
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs
-
-# Install Claude CLI (optional - configure as needed)
-# RUN npm install -g @anthropic-ai/claude-cli
-
-WORKDIR /workspace
-CMD ["/bin/bash"]
-EOF
-fi
-
-# Run Ralph in container
-docker run -it --rm \
-    -v "$(pwd):/workspace" \
-    -v "$HOME/.cursor:/root/.cursor:ro" \
-    -e "ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}" \
-    -e "RUN_MODE=${RUN_MODE:-continuous}" \
-    -e "MAX_ITERATIONS=${MAX_ITERATIONS:-100}" \
-    ralph-env \
-    /workspace/ralph.sh "$@"
-```
-
-Make it executable:
-```bash
-chmod +x ralph-docker.sh
-```
-
-Usage:
-```bash
-# Run in Docker continuous mode
+# First time: Docker will build the image (takes ~2 minutes)
 ./ralph-docker.sh
 
-# Or specify iterations
+# Subsequent runs: Uses cached image (starts immediately)
+./ralph-docker.sh
+
+# Force rebuild (e.g., after updating dependencies)
+REBUILD=true ./ralph-docker.sh
+
+# Limit iterations
 MAX_ITERATIONS=50 ./ralph-docker.sh
+
+# Human-in-the-loop mode in Docker
+RUN_MODE=once ./ralph-docker.sh
 ```
+
+### Configuration
+
+Environment variables you can pass to Docker:
+
+```bash
+# Core settings
+ANTHROPIC_API_KEY=your-key    # Required for Claude CLI
+RUN_MODE=continuous           # Default: continuous (or use 'once')
+MAX_ITERATIONS=100            # Default: 100
+
+# Ralph settings (same as ralph.sh)
+AI_AGENT_MODE=claude          # claude, cursor, or aider
+LOG_LEVEL=INFO                # DEBUG, INFO, WARN, ERROR
+TEST_OUTPUT_MODE=failures     # full, failures, summary
+
+# Docker settings
+DOCKER_IMAGE_NAME=ralph-env   # Custom image name
+DOCKER_IMAGE_TAG=latest       # Custom image tag
+REBUILD=false                 # Force image rebuild
+```
+
+### What's In The Docker Image
+
+The `ralph-env` image includes:
+
+- **Base**: Ubuntu 22.04 LTS
+- **Runtime**: Node.js 20.x, Python 3, Bash
+- **Tools**: git, curl, jq, npm
+- **Optional**: Claude CLI (commented out - uncomment in Dockerfile if needed)
+
+To customize the image, edit the Dockerfile section in `ralph-docker.sh` and set `REBUILD=true`.
+
+### Volume Mounts
+
+Ralph Docker mounts exactly two directories:
+
+1. **Project Directory** (read-write): `-v $(pwd):/workspace`
+   - Your code, .ralph/ directory, and git repository
+   - Ralph can create commits, but git push is blocked by default
+
+2. **.cursor Config** (read-only): `-v $HOME/.cursor:/root/.cursor:ro`
+   - Allows Ralph to use your Cursor API keys if needed
+   - Read-only for security
+
+**NOT mounted**: Your home directory, system files, other projects - Ralph has zero access to these.
+
+### Usage Examples
+
+```bash
+# Standard continuous mode (recommended)
+./ralph-docker.sh
+
+# Run with custom iterations
+MAX_ITERATIONS=20 ./ralph-docker.sh
+
+# Debug mode with verbose logging
+LOG_LEVEL=DEBUG ./ralph-docker.sh
+
+# Test a single iteration
+RUN_MODE=once ./ralph-docker.sh
+
+# Force rebuild after updating Dockerfile
+REBUILD=true ./ralph-docker.sh
+```
+
+### Stopping Ralph
+
+```bash
+# From the same terminal: Press CTRL-C once
+# Docker handles cleanup automatically
+
+# From another terminal:
+docker ps                    # Find the container ID
+docker stop <container-id>   # Stops cleanly
+
+# Nuclear option (not recommended):
+docker kill <container-id>   # Force kill
+```
+
+### Troubleshooting
+
+**Docker not found:**
+```bash
+# macOS
+brew install --cask docker
+
+# Ubuntu/Debian
+sudo apt-get install docker.io
+
+# Then start Docker Desktop or daemon
+```
+
+**Permission denied:**
+```bash
+# Linux: Add your user to docker group
+sudo usermod -aG docker $USER
+# Log out and back in
+```
+
+**Image build fails:**
+```bash
+# Check Docker has internet access
+docker run --rm ubuntu:22.04 curl -I https://deb.nodesource.com
+
+# Clear Docker cache and rebuild
+docker system prune -a
+REBUILD=true ./ralph-docker.sh
+```
+
+**Git commits not persisting:**
+- The project directory is mounted read-write
+- Commits ARE persisted to your host
+- Check you're not on a protected branch (main/master)
+
+**Tests fail in Docker:**
+- Tests run in the same environment as development
+- If tests pass locally but fail in Docker, check for:
+  - Missing system dependencies in Dockerfile
+  - Path assumptions (use absolute paths)
+  - Environment variable differences
 
 ## Solution 4: Graceful Exit on Completion
 
