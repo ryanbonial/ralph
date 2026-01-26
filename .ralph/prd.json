@@ -551,6 +551,32 @@
       "passes": true,
       "iterations_taken": 1,
       "blocked_reason": null
+    },
+    {
+      "id": "022",
+      "type": "feature",
+      "category": "testing",
+      "priority": "critical",
+      "description": "Enforce TDD red-green workflow for bug fixes",
+      "steps": [
+        "Update AGENT_PROMPT.md section for type='bug' to require TDD approach",
+        "Add explicit TDD workflow for bugs: 1) Write failing test that reproduces bug, 2) Verify test fails (RED), 3) Fix the bug, 4) Verify test passes (GREEN)",
+        "Update AGENT_PROMPT.md section 4 (Plan Your Implementation) with bug-specific TDD guidance",
+        "Add instruction: 'For bugs, FIRST write a test that demonstrates the broken behavior'",
+        "Add instruction: 'Run the test and verify it fails before making any fixes'",
+        "Add instruction: 'Fix the bug, then verify the test now passes'",
+        "Add instruction: 'This proves: 1) Bug was reproducible, 2) Fix actually works, 3) Regression test exists'",
+        "Update section 6 (Test Thoroughly) to verify bug fixes followed TDD workflow",
+        "Document TDD for bugs philosophy in README",
+        "Test: create a test bug in PRD, verify agent writes failing test first, then fixes"
+      ],
+      "estimated_complexity": "small",
+      "depends_on": [
+        "020"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
     }
   ],
   "notes": [
@@ -560,9 +586,10 @@
     "Feature 010 ensures code quality gates (lint/prettier/typescript) are enforced (COMPLETE)",
     "Feature 017 prevents agents from continuing to next feature (COMPLETE)",
     "Feature 020 is CRITICAL: implement basic automated tests that actually run (NEW)",
-    "Feature 021 is CRITICAL: fix Ralph's methodology to REQUIRE test creation for features (NEW)",
+    "Feature 021 is CRITICAL: fix Ralph's methodology to REQUIRE test creation for features (COMPLETE)",
     "Feature 021 addresses the root cause: Ralph built without tests because tests weren't required",
     "After 021: Ralph will enforce test creation, preventing the 'no tests' problem from recurring",
+    "Feature 022 enforces TDD (red-green) workflow for bug fixes: write failing test first, then fix",
     "Feature 001 adds auto-PR creation with GitHub CLI (reduced scope - 000a covers branch creation)",
     "Features 002-006 implement the remaining improvements from the analysis",
     "Feature 007 improves code quality of ralph.sh",
