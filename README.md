@@ -111,6 +111,20 @@ Then use `ralph` from any project directory!
 
    Runs continuously until all features complete.
 
+   **Docker Sandboxed Mode (🔒 Maximum Security):**
+
+   ```bash
+   ./ralph-docker.sh
+   ```
+
+   Runs in isolated Docker container with:
+   - No host system access (only project directory)
+   - No permission prompts (bypasses IDE permissions)
+   - Clean CTRL-C handling (no double press needed)
+   - Reproducible Ubuntu environment
+
+   See [CONTINUOUS_MODE_IMPROVEMENTS.md](CONTINUOUS_MODE_IMPROVEMENTS.md) for details.
+
 4. **Watch it build**: The agent will implement features one by one, test each thoroughly, and commit progress.
 
 ### Option 2: Existing Project
@@ -564,6 +578,108 @@ Quality Gate Summary:
 ```
 
 **Important**: Features CANNOT be marked as `"passes": true` in `prd.json` until ALL quality gates pass.
+
+## 🐳 Sandboxed Execution (Docker)
+
+Ralph includes `ralph-docker.sh` for running in complete isolation using Docker containers.
+
+### Why Use Docker?
+
+**Security Benefits:**
+- **Isolated Environment**: Ralph runs with ZERO access to your host system
+- **Volume-Only Access**: Only your project directory is accessible (read-write)
+- **No Permission Prompts**: Bypasses IDE permission systems entirely
+- **Clean Shutdown**: Single CTRL-C works (no double-press issue)
+- **Reproducible**: Same Ubuntu 22.04, Node.js 20.x, Python 3 environment every time
+
+**Perfect for:**
+- Overnight continuous mode runs
+- Untrusted or experimental code
+- Remote server deployments
+- Avoiding permission interruptions
+
+### Quick Start
+
+```bash
+# First run: Builds Docker image (~2 minutes)
+./ralph-docker.sh
+
+# Subsequent runs: Uses cached image
+./ralph-docker.sh
+
+# Limit iterations
+MAX_ITERATIONS=50 ./ralph-docker.sh
+
+# Force rebuild after Dockerfile changes
+REBUILD=true ./ralph-docker.sh
+```
+
+### What Gets Mounted
+
+**Only these directories are accessible to Ralph:**
+
+1. **Project Directory** (read-write): Your code, .ralph/, git repo
+2. **.cursor Config** (read-only): API keys for Cursor integration
+
+**NOT accessible**: Your home directory, system files, other projects, SSH keys
+
+### Environment Variables
+
+All standard Ralph settings work in Docker:
+
+```bash
+# Core settings
+ANTHROPIC_API_KEY=your-key    # For Claude CLI
+RUN_MODE=continuous           # Default in Docker
+MAX_ITERATIONS=100            # Limit iterations
+
+# Ralph configuration
+LOG_LEVEL=DEBUG               # Verbose logging
+TEST_OUTPUT_MODE=failures     # Show only failures
+
+# Docker-specific
+REBUILD=true                  # Force image rebuild
+DOCKER_IMAGE_NAME=ralph-env   # Custom image name
+```
+
+### Comparison: Docker vs Standard Mode
+
+| Feature                    | Standard Mode    | Docker Mode    |
+| -------------------------- | ---------------- | -------------- |
+| Host System Access         | Full             | **None**       |
+| Permission Prompts         | May interrupt    | **None**       |
+| CTRL-C Behavior            | May need 2×      | **Clean 1×**   |
+| Setup Time                 | Instant          | ~2 min first   |
+| Environment Consistency    | Varies by system | **Guaranteed** |
+| Overhead                   | None             | Minimal        |
+| Best For                   | Development      | Production     |
+
+### Advanced Usage
+
+**Custom Dockerfile:**
+Edit the Dockerfile section in `ralph-docker.sh`:
+
+```bash
+# Add your custom dependencies
+RUN apt-get install -y postgresql-client redis-tools
+
+# Install project-specific tools
+RUN npm install -g your-global-package
+```
+
+Then rebuild:
+
+```bash
+REBUILD=true ./ralph-docker.sh
+```
+
+**Troubleshooting:**
+
+See [CONTINUOUS_MODE_IMPROVEMENTS.md](CONTINUOUS_MODE_IMPROVEMENTS.md#solution-3-docker-setup-for-safe-continuous-mode--implemented) for:
+- Docker installation instructions
+- Common issues and solutions
+- Volume mount configuration
+- Performance tuning
 
 ## 📊 Feature Dependencies & Acceptance Criteria
 
