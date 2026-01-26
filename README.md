@@ -791,6 +791,169 @@ RUN_MODE=continuous AUTO_CREATE_BRANCH=true ./ralph.sh
 - ✅ Safe to run Ralph on main - it automatically moves to a feature branch
 - ✅ Conventional branch prefixes (feature/, bugfix/, etc.) for better organization
 
+### Logging and Error Handling
+
+Ralph includes comprehensive logging and error handling features (Feature 007) to help diagnose issues and monitor execution.
+
+#### Log Levels
+
+Control the verbosity of output with log levels:
+
+```bash
+# Default: Show info, warnings, and errors
+./ralph.sh
+
+# Debug mode: Show all messages including debug info
+./ralph.sh --verbose
+LOG_LEVEL=DEBUG ./ralph.sh
+
+# Quiet mode: Show only errors
+./ralph.sh --quiet
+LOG_LEVEL=ERROR ./ralph.sh
+
+# Warning mode: Show warnings and errors
+LOG_LEVEL=WARN ./ralph.sh
+```
+
+**Log Level Hierarchy:**
+- `DEBUG`: Most verbose - shows tool checks, internal operations, all messages
+- `INFO`: Normal verbosity - shows informational messages, warnings, errors (default)
+- `WARN`: Shows only warnings and errors
+- `ERROR`: Least verbose - shows only error messages
+
+#### Persistent Logging
+
+Save logs to a file for later analysis:
+
+```bash
+# Log to file
+LOG_FILE=".ralph/ralph.log" ./ralph.sh
+
+# Tail logs in real-time
+tail -f .ralph/ralph.log
+
+# Review logs later
+less .ralph/ralph.log
+
+# Combine with verbose mode
+LOG_LEVEL=DEBUG LOG_FILE=".ralph/ralph.log" ./ralph.sh
+```
+
+**Log file format:**
+```
+[2025-01-26 10:30:15] [INFO] Checking prerequisites...
+[2025-01-26 10:30:15] [DEBUG] ✓ git is installed
+[2025-01-26 10:30:15] [DEBUG] ✓ python3 is installed
+[2025-01-26 10:30:16] [SUCCESS] Prerequisites check complete
+```
+
+#### Health Check Command
+
+Run a comprehensive health check to verify your Ralph setup:
+
+```bash
+./ralph.sh --doctor
+```
+
+**What it checks:**
+1. **Required Tools**: git, python3, curl are installed
+2. **Git Repository**: Repository exists, current branch status
+3. **.ralph Directory**: PRD file, progress file, valid JSON structure
+4. **Agent Prompt**: AGENT_PROMPT.md exists
+5. **Configuration**: All configuration values are displayed
+6. **Sanity**: Validates Sanity config if PRD_STORAGE=sanity
+7. **Quality Gates**: Checks for lint, test, typecheck, format scripts
+
+**Example output:**
+```
+╔════════════════════════════════════════╗
+║   Ralph Wiggum Health Check (Doctor)  ║
+╚════════════════════════════════════════╝
+
+[INFO] 1/7 Checking required tools...
+[SUCCESS] ✓ All required tools are installed
+
+[INFO] 2/7 Checking git repository...
+[SUCCESS] ✓ Git repository exists
+[INFO]   Current branch: feature/my-feature
+[SUCCESS]   ✓ Branch is safe for commits
+
+...
+
+════════════════════════════════════════
+[SUCCESS] 🎉 All checks passed! Ralph is ready to run.
+```
+
+#### Tool Verification
+
+Ralph automatically checks for required tools before running:
+
+**Required tools:**
+- `git` - Version control
+- `python3` - JSON parsing and PRD manipulation
+- `curl` - HTTP requests (for Sanity integration)
+
+**Optional tools:**
+- `node` / `npm` - JavaScript quality gates
+- `jq` - JSON parsing (Python used as fallback)
+
+If a required tool is missing, Ralph provides installation instructions:
+```
+[ERROR] ✗ python3 is not installed or not in PATH
+[INFO]   Install with: brew install python3 (macOS) or apt-get install python3 (Linux)
+```
+
+#### Troubleshooting Guide
+
+For common issues and solutions, see **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)**
+
+The guide includes:
+- Quick health check instructions
+- Common error messages and solutions
+- Installation instructions for missing tools
+- Protected branch issues
+- PRD validation errors
+- Quality gate failures
+- Sanity connection problems
+- Verbose logging examples
+- Configuration debugging
+
+**Quick troubleshooting:**
+```bash
+# 1. Run health check
+./ralph.sh --doctor
+
+# 2. Enable verbose logging
+./ralph.sh --verbose
+
+# 3. Check logs
+tail -50 .ralph/progress.txt
+
+# 4. Validate PRD
+python3 -m json.tool .ralph/prd.json
+```
+
+#### Error Messages with Context
+
+Ralph provides helpful error messages with suggestions:
+
+**Before (generic):**
+```
+Error: File not found
+```
+
+**After (helpful):**
+```
+[ERROR] PRD file not found: .ralph/prd.json
+[INFO] Run the initializer agent first, or create .ralph/ directory manually
+```
+
+**Graceful degradation:**
+- Missing optional tools don't block execution
+- Helpful suggestions for fixing issues
+- Clear indication of what's required vs optional
+- Installation hints for common package managers
+
 ### Sanity CMS Integration
 
 Ralph supports storing your PRD (Product Requirements Document) in Sanity CMS instead of local JSON files. This enables team collaboration, visual editing, version history, and real-time sync across multiple Ralph instances.

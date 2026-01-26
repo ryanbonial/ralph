@@ -213,9 +213,10 @@
       "depends_on": [
         "000"
       ],
-      "passes": false,
-      "iterations_taken": 0,
-      "blocked_reason": null
+      "passes": true,
+      "iterations_taken": 1,
+      "blocked_reason": null,
+      "test_files": ["tests/ralph-logging.bats"]
     },
     {
       "id": "008",

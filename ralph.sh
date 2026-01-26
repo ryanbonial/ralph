@@ -71,28 +71,160 @@ SANITY_TOKEN="${SANITY_TOKEN:-}"
 # PRD storage mode: "file" (default) or "sanity" (requires Feature 014)
 PRD_STORAGE="${PRD_STORAGE:-file}"
 
+# Logging Configuration (Feature 007)
+# Log level: DEBUG, INFO, WARN, ERROR (default: INFO)
+# DEBUG: Show all messages including debug info
+# INFO: Show informational messages, warnings, and errors (default)
+# WARN: Show only warnings and errors
+# ERROR: Show only errors
+LOG_LEVEL="${LOG_LEVEL:-INFO}"
+# Optional log file for persistent logging (default: none, logs to console only)
+# Example: LOG_FILE=".ralph/ralph.log"
+LOG_FILE="${LOG_FILE:-}"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+GRAY='\033[0;90m'
 NC='\033[0m' # No Color
 
-# Function to print colored output
+# Internal function to determine if message should be logged based on level
+should_log() {
+    local msg_level="$1"
+
+    # Convert levels to numeric values for comparison
+    local level_value=0
+    case "$LOG_LEVEL" in
+        DEBUG) level_value=0 ;;
+        INFO)  level_value=1 ;;
+        WARN)  level_value=2 ;;
+        ERROR) level_value=3 ;;
+        *)     level_value=1 ;; # Default to INFO
+    esac
+
+    local msg_value=0
+    case "$msg_level" in
+        DEBUG) msg_value=0 ;;
+        INFO)  msg_value=1 ;;
+        WARN)  msg_value=2 ;;
+        ERROR) msg_value=3 ;;
+    esac
+
+    # Log if message level >= configured log level
+    [ $msg_value -ge $level_value ]
+}
+
+# Internal function to write to log file if configured
+write_to_log_file() {
+    local level="$1"
+    local message="$2"
+
+    if [ -n "$LOG_FILE" ]; then
+        local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+        echo "[$timestamp] [$level] $message" >> "$LOG_FILE"
+    fi
+}
+
+# Enhanced logging functions with level filtering and file output
+log_debug() {
+    if should_log "DEBUG"; then
+        echo -e "${GRAY}[DEBUG]${NC} $1"
+    fi
+    write_to_log_file "DEBUG" "$1"
+}
+
 log_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
+    if should_log "INFO"; then
+        echo -e "${BLUE}[INFO]${NC} $1"
+    fi
+    write_to_log_file "INFO" "$1"
 }
 
 log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
+    if should_log "INFO"; then
+        echo -e "${GREEN}[SUCCESS]${NC} $1"
+    fi
+    write_to_log_file "SUCCESS" "$1"
 }
 
 log_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+    if should_log "WARN"; then
+        echo -e "${YELLOW}[WARNING]${NC} $1"
+    fi
+    write_to_log_file "WARNING" "$1"
 }
 
 log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+    if should_log "ERROR"; then
+        echo -e "${RED}[ERROR]${NC} $1"
+    fi
+    write_to_log_file "ERROR" "$1"
+}
+
+# ==========================================
+# Tool Availability Checking (Feature 007)
+# ==========================================
+
+# Check if a command/tool is available
+check_tool() {
+    local tool="$1"
+    local install_hint="$2"
+
+    if command -v "$tool" >/dev/null 2>&1; then
+        log_debug "✓ $tool is installed"
+        return 0
+    else
+        log_error "✗ $tool is not installed or not in PATH"
+        if [ -n "$install_hint" ]; then
+            log_info "  Install with: $install_hint"
+        fi
+        return 1
+    fi
+}
+
+# Verify all required tools are available
+check_required_tools() {
+    log_debug "Checking for required tools..."
+
+    local all_tools_available=true
+
+    # Check git
+    if ! check_tool "git" "brew install git (macOS) or apt-get install git (Linux)"; then
+        all_tools_available=false
+    fi
+
+    # Check python3
+    if ! check_tool "python3" "brew install python3 (macOS) or apt-get install python3 (Linux)"; then
+        all_tools_available=false
+    fi
+
+    # Check curl
+    if ! check_tool "curl" "brew install curl (macOS) or apt-get install curl (Linux)"; then
+        all_tools_available=false
+    fi
+
+    # Check optional tools (don't fail if missing, just warn)
+    if ! command -v "node" >/dev/null 2>&1; then
+        log_debug "○ node is not installed (optional for quality gates)"
+    fi
+
+    if ! command -v "npm" >/dev/null 2>&1; then
+        log_debug "○ npm is not installed (optional for quality gates)"
+    fi
+
+    if ! command -v "jq" >/dev/null 2>&1; then
+        log_debug "○ jq is not installed (optional, Python is used as fallback)"
+    fi
+
+    if [ "$all_tools_available" = false ]; then
+        log_error "Some required tools are missing. Please install them and try again."
+        return 1
+    fi
+
+    log_debug "All required tools are available"
+    return 0
 }
 
 # ==========================================
@@ -476,6 +608,12 @@ auto_create_feature_branch() {
 check_prerequisites() {
     log_info "Checking prerequisites..."
 
+    # Check required tools are installed
+    if ! check_required_tools; then
+        log_error "Missing required tools. Cannot continue."
+        exit 1
+    fi
+
     # Check if on protected branch
     if is_protected_branch; then
         if [ "$AUTO_CREATE_BRANCH" = "true" ]; then
@@ -576,6 +714,187 @@ check_prerequisites() {
     fi
 
     log_success "Prerequisites check complete"
+}
+
+# Health check command - verify Ralph setup and configuration
+run_doctor() {
+    echo ""
+    echo "╔════════════════════════════════════════╗"
+    echo "║   Ralph Wiggum Health Check (Doctor)  ║"
+    echo "╚════════════════════════════════════════╝"
+    echo ""
+
+    local all_checks_passed=true
+
+    # 1. Check required tools
+    log_info "1/7 Checking required tools..."
+    if check_required_tools; then
+        log_success "✓ All required tools are installed"
+    else
+        log_error "✗ Some required tools are missing"
+        all_checks_passed=false
+    fi
+    echo ""
+
+    # 2. Check git repository
+    log_info "2/7 Checking git repository..."
+    if [ -d ".git" ]; then
+        log_success "✓ Git repository exists"
+
+        local current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+        if [ -n "$current_branch" ]; then
+            log_info "  Current branch: $current_branch"
+
+            if is_protected_branch; then
+                log_warning "  ⚠ You are on a protected branch: $current_branch"
+                log_info "  Suggestion: Create a feature branch before running Ralph"
+            else
+                log_success "  ✓ Branch is safe for commits"
+            fi
+        fi
+    else
+        log_error "✗ No git repository found"
+        log_info "  Run: git init"
+        all_checks_passed=false
+    fi
+    echo ""
+
+    # 3. Check .ralph directory structure
+    log_info "3/7 Checking .ralph directory..."
+    if [ -d ".ralph" ]; then
+        log_success "✓ .ralph directory exists"
+
+        if [ -f "$PRD_FILE" ]; then
+            log_success "  ✓ PRD file exists: $PRD_FILE"
+
+            # Validate PRD JSON structure
+            if python3 -c "import json; json.load(open('$PRD_FILE'))" 2>/dev/null; then
+                log_success "  ✓ PRD file is valid JSON"
+
+                # Count features
+                local total_features=$(python3 -c "import json; prd=json.load(open('$PRD_FILE')); print(len(prd.get('features', [])))" 2>/dev/null)
+                local complete_features=$(python3 -c "import json; prd=json.load(open('$PRD_FILE')); print(sum(1 for f in prd.get('features', []) if f.get('passes', False)))" 2>/dev/null)
+                log_info "  Features: $complete_features/$total_features complete"
+            else
+                log_error "  ✗ PRD file is not valid JSON"
+                all_checks_passed=false
+            fi
+        else
+            log_error "  ✗ PRD file not found: $PRD_FILE"
+            all_checks_passed=false
+        fi
+
+        if [ -f "$PROGRESS_FILE" ]; then
+            log_success "  ✓ Progress file exists: $PROGRESS_FILE"
+        else
+            log_warning "  ○ Progress file not found (will be created on first run)"
+        fi
+    else
+        log_error "✗ .ralph directory not found"
+        log_info "  Run the Ralph initializer to set up the project"
+        all_checks_passed=false
+    fi
+    echo ""
+
+    # 4. Check agent prompt file
+    log_info "4/7 Checking agent prompt..."
+    if [ -f "$AGENT_PROMPT_FILE" ]; then
+        log_success "✓ Agent prompt file exists: $AGENT_PROMPT_FILE"
+    else
+        log_error "✗ Agent prompt file not found: $AGENT_PROMPT_FILE"
+        all_checks_passed=false
+    fi
+    echo ""
+
+    # 5. Check configuration
+    log_info "5/7 Checking configuration..."
+    log_info "  RUN_MODE: $RUN_MODE"
+    log_info "  LOG_LEVEL: $LOG_LEVEL"
+    log_info "  AUTO_CREATE_BRANCH: $AUTO_CREATE_BRANCH"
+    log_info "  PROTECTED_BRANCHES: $PROTECTED_BRANCHES"
+    log_info "  ALLOW_GIT_PUSH: $ALLOW_GIT_PUSH"
+    log_info "  ROLLBACK_ON_FAILURE: $ROLLBACK_ON_FAILURE"
+    log_info "  VERIFY_BEFORE_COMPLETE: $VERIFY_BEFORE_COMPLETE"
+    log_info "  TEST_REQUIRED_FOR_FEATURES: $TEST_REQUIRED_FOR_FEATURES"
+    log_info "  PRD_STORAGE: $PRD_STORAGE"
+    if [ -n "$LOG_FILE" ]; then
+        log_info "  LOG_FILE: $LOG_FILE"
+    fi
+    log_success "✓ Configuration loaded"
+    echo ""
+
+    # 6. Check Sanity configuration (if using Sanity)
+    log_info "6/7 Checking Sanity configuration..."
+    if [ "$PRD_STORAGE" = "sanity" ]; then
+        if validate_sanity_config 2>/dev/null; then
+            log_success "✓ Sanity configuration is valid"
+            log_info "  Project ID: $SANITY_PROJECT_ID"
+            log_info "  Dataset: $SANITY_DATASET"
+
+            # Test connection
+            if get_prd_data >/dev/null 2>&1; then
+                log_success "  ✓ Successfully connected to Sanity"
+            else
+                log_error "  ✗ Failed to connect to Sanity"
+                all_checks_passed=false
+            fi
+        else
+            log_error "✗ Sanity configuration is invalid"
+            all_checks_passed=false
+        fi
+    else
+        log_info "  Not using Sanity (PRD_STORAGE=file)"
+    fi
+    echo ""
+
+    # 7. Check package.json and quality gates (if exists)
+    log_info "7/7 Checking quality gates..."
+    if [ -f "package.json" ]; then
+        log_success "✓ package.json exists"
+
+        if grep -q '"lint"' package.json 2>/dev/null; then
+            log_success "  ✓ Linting configured"
+        else
+            log_info "  ○ No linting script found"
+        fi
+
+        if grep -q '"test"' package.json 2>/dev/null; then
+            log_success "  ✓ Test script configured"
+        else
+            log_info "  ○ No test script found"
+        fi
+
+        if grep -q '"typecheck"' package.json 2>/dev/null; then
+            log_success "  ✓ Type checking configured"
+        else
+            log_info "  ○ No typecheck script found"
+        fi
+
+        if grep -q '"format' package.json 2>/dev/null; then
+            log_success "  ✓ Formatting configured"
+        else
+            log_info "  ○ No formatting script found"
+        fi
+    else
+        log_info "  No package.json found (not a Node.js project)"
+    fi
+    echo ""
+
+    # Summary
+    echo "════════════════════════════════════════"
+    if [ "$all_checks_passed" = true ]; then
+        log_success "🎉 All checks passed! Ralph is ready to run."
+        echo ""
+        log_info "You can start Ralph with: ./ralph.sh"
+        echo ""
+        return 0
+    else
+        log_error "⚠️  Some checks failed. Please fix the issues above."
+        echo ""
+        log_info "Run './ralph.sh --help' for more information"
+        echo ""
+        return 1
+    fi
 }
 
 # Check if all features are complete
@@ -1127,6 +1446,18 @@ main() {
                 CUSTOM_BRANCH_NAME="$2"
                 shift 2
                 ;;
+            --verbose|-v)
+                LOG_LEVEL="DEBUG"
+                shift
+                ;;
+            --quiet|-q)
+                LOG_LEVEL="ERROR"
+                shift
+                ;;
+            --doctor)
+                run_doctor
+                exit $?
+                ;;
             --help|-h)
                 echo "Ralph Wiggum Technique - Autonomous Coding Agent"
                 echo ""
@@ -1134,13 +1465,25 @@ main() {
                 echo ""
                 echo "Options:"
                 echo "  --branch-name NAME    Specify custom branch name for auto-creation"
+                echo "  --verbose, -v         Enable verbose output (LOG_LEVEL=DEBUG)"
+                echo "  --quiet, -q           Minimal output, errors only (LOG_LEVEL=ERROR)"
+                echo "  --doctor              Run health check to verify Ralph setup"
                 echo "  --help, -h            Show this help message"
                 echo ""
                 echo "Environment Variables:"
                 echo "  RUN_MODE              'once' (default) or 'continuous'"
+                echo "  LOG_LEVEL             'DEBUG', 'INFO' (default), 'WARN', 'ERROR'"
+                echo "  LOG_FILE              Optional log file path for persistent logging"
                 echo "  AUTO_CREATE_BRANCH    'true' (default) or 'false'"
                 echo "  PROTECTED_BRANCHES    Comma-separated list (default: 'main,master')"
                 echo "  ALLOW_GIT_PUSH        'true' or 'false' (default: false)"
+                echo "  PRD_STORAGE           'file' (default) or 'sanity'"
+                echo ""
+                echo "Examples:"
+                echo "  $0                    Run once in human-in-the-loop mode"
+                echo "  $0 --doctor           Check Ralph setup and configuration"
+                echo "  $0 --verbose          Run with verbose logging"
+                echo "  RUN_MODE=continuous $0   Run in continuous mode"
                 echo ""
                 exit 0
                 ;;

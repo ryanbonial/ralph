@@ -665,3 +665,86 @@ Notes for next iteration:
 - Next high-priority features: 007, 011, 012 are available
 - Features 004, 008 remain blocked (depend on feature 001)
 ---
+
+--- 2026-01-26 (Feature 007) ---
+Feature: 007 - Improve ralph.sh error handling and logging
+Status: Completed
+Type: refactor
+Complexity: medium
+
+Implementation:
+- Added LOG_LEVEL configuration (DEBUG, INFO, WARN, ERROR) with default INFO
+- Added LOG_FILE configuration for optional persistent logging
+- Enhanced logging functions to respect log levels and write to files
+  * log_debug() - for debug-level messages (gray output)
+  * log_info() - for informational messages (blue output)
+  * log_success() - for success messages (green output)
+  * log_warning() - for warnings (yellow output)
+  * log_error() - for errors (red output)
+- Implemented should_log() to filter messages by log level
+- Implemented write_to_log_file() for persistent logging with timestamps
+- Added check_tool() function to verify command availability
+- Added check_required_tools() function to verify git, python3, curl
+  * Provides installation hints for missing tools
+  * Checks optional tools (node, npm, jq) without failing
+- Integrated tool checking into check_prerequisites()
+- Implemented run_doctor() health check command with 7 checks:
+  1. Required tools (git, python3, curl)
+  2. Git repository and branch status
+  3. .ralph directory structure and PRD validity
+  4. Agent prompt file existence
+  5. Configuration display (all settings)
+  6. Sanity configuration (if applicable)
+  7. Quality gates (lint, test, typecheck, format)
+- Added --verbose/-v flag to set LOG_LEVEL=DEBUG
+- Added --quiet/-q flag to set LOG_LEVEL=ERROR
+- Added --doctor flag to run health check
+- Updated --help text with new flags and environment variables
+- Created comprehensive TROUBLESHOOTING.md guide with:
+  * Quick health check instructions
+  * Common issues and solutions (10 categories)
+  * Missing tools, protected branches, PRD errors, etc.
+  * Verbose logging examples
+  * Persistent logging examples
+  * Configuration debugging tips
+- Updated README.md with "Logging and Error Handling" section
+  * Log levels documentation
+  * Persistent logging examples
+  * Health check command documentation
+  * Tool verification explanation
+  * Error message improvements
+  * Link to troubleshooting guide
+
+Key Files Modified:
+- ralph.sh: Added logging infrastructure, tool checking, --doctor command (lines 73-164, 608-716, 1440-1507)
+- TROUBLESHOOTING.md: Created comprehensive troubleshooting guide (424 lines)
+- README.md: Added logging and error handling documentation section
+- tests/ralph-logging.bats: Created 33 new tests for logging features
+- .ralph/prd.json: Marked feature 007 as complete with iterations_taken=1
+
+Testing:
+- ✅ Bash syntax validation passed: bash -n ralph.sh
+- ✅ All 108 tests pass (75 existing + 33 new tests)
+- ✅ --doctor command executes successfully
+- ✅ --verbose flag shows DEBUG messages
+- ✅ --quiet flag suppresses INFO messages
+- ✅ --help shows updated documentation
+- ✅ Health check verifies all 7 components
+- ✅ Log levels filter messages correctly
+- ✅ Tool checking provides helpful error messages
+- ✅ PRD JSON remains valid
+
+Challenges:
+- None - implementation was straightforward
+- Since this is a refactor, all existing tests continued to pass
+- New logging infrastructure is backward compatible
+
+Notes for next iteration:
+- Feature 007 is now complete
+- Ralph now has comprehensive error handling and logging
+- --doctor command helps users diagnose setup issues quickly
+- Log levels (--verbose, --quiet) help with debugging and quiet operation
+- TROUBLESHOOTING.md provides self-service support for common issues
+- Tool checking catches missing dependencies early with helpful hints
+- Next available high-priority features: 011, 012
+---
