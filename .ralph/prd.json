@@ -497,6 +497,60 @@
       "passes": false,
       "iterations_taken": 0,
       "blocked_reason": null
+    },
+    {
+      "id": "020",
+      "type": "test",
+      "category": "testing",
+      "priority": "critical",
+      "description": "Implement basic automated tests for ralph.sh that actually run",
+      "steps": [
+        "Create tests/ directory in repository root",
+        "Set up bash testing framework (bats-core via npm)",
+        "Add package.json with test script: 'npm test' runs bats tests",
+        "Write test for ralph.sh configuration loading and defaults",
+        "Write test for PRD JSON parsing and validation",
+        "Write test for feature selection logic (next unblocked feature)",
+        "Write test for dependency checking (blocks features with unmet deps)",
+        "Write test for protected branch detection",
+        "Create mock .ralph/prd.json fixture for testing",
+        "Ensure tests can run in CI environment (no interactive prompts)",
+        "Add .github/workflows/test.yml to run tests on push/PR",
+        "Document how to run tests in README (npm test)",
+        "Verify tests pass: npm test should exit 0 with all tests passing"
+      ],
+      "estimated_complexity": "medium",
+      "depends_on": [],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
+    },
+    {
+      "id": "021",
+      "type": "feature",
+      "category": "testing",
+      "priority": "critical",
+      "description": "Update Ralph methodology to require test creation for new features",
+      "steps": [
+        "Update AGENT_PROMPT.md section 6 to explicitly require writing tests for new functionality",
+        "Add new quality gate: 'Test Coverage' that checks if feature has associated tests",
+        "Update PRD schema to include optional 'test_files' field listing expected test files",
+        "Update AGENT_PROMPT.md to check PRD 'test_files' field and verify those files exist",
+        "Modify ralph.sh run_verification_tests() to fail if feature type is 'feature' and no new tests written",
+        "Add TEST_REQUIRED_FOR_FEATURES config option (default: true for type=feature, false for refactor)",
+        "Update AGENT_PROMPT.md: 'For feature type, you MUST write tests. Feature cannot pass without tests.'",
+        "Add guidance: refactors must prove behavior unchanged, bugs must have regression tests",
+        "Update INITIALIZER_PROMPT.md to include test_files field in PRD template",
+        "Document the 'tests required' philosophy in README",
+        "Test: try to complete a feature without tests, verify it's blocked by quality gate"
+      ],
+      "estimated_complexity": "medium",
+      "depends_on": [
+        "020"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
     }
   ],
   "notes": [
@@ -505,10 +559,14 @@
     "Feature 000 implements git safety checks (COMPLETE)",
     "Feature 010 ensures code quality gates (lint/prettier/typescript) are enforced (COMPLETE)",
     "Feature 017 prevents agents from continuing to next feature (COMPLETE)",
+    "Feature 020 is CRITICAL: implement basic automated tests that actually run (NEW)",
+    "Feature 021 is CRITICAL: fix Ralph's methodology to REQUIRE test creation for features (NEW)",
+    "Feature 021 addresses the root cause: Ralph built without tests because tests weren't required",
+    "After 021: Ralph will enforce test creation, preventing the 'no tests' problem from recurring",
     "Feature 001 adds auto-PR creation with GitHub CLI (reduced scope - 000a covers branch creation)",
     "Features 002-006 implement the remaining improvements from the analysis",
     "Feature 007 improves code quality of ralph.sh",
-    "Feature 008 adds proper testing infrastructure",
+    "Feature 008 adds proper testing infrastructure (Feature 020 is the foundational prerequisite)",
     "Feature 009 documents all the new features",
     "Feature 011 optimizes token usage by showing only failing tests",
     "Feature 012 adds sandboxed execution for enhanced security",
@@ -529,6 +587,7 @@
     "depends_on": "Array of feature IDs that must be completed before this one",
     "passes": "Boolean - true when fully implemented and verified",
     "iterations_taken": "Number of Ralph iterations needed to complete (tracked automatically)",
-    "blocked_reason": "String - if blocked, explain why (null if not blocked)"
+    "blocked_reason": "String - if blocked, explain why (null if not blocked)",
+    "test_files": "(Optional) Array of test files that should exist for this feature - enforced by quality gate"
   }
 }
