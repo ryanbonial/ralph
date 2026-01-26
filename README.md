@@ -418,7 +418,12 @@ Ralph checks the feature `type` and enforces test requirements:
 - **`feature` type**: MUST have tests - feature cannot pass without them
   - If `test_files` specified in PRD: verifies those files exist
   - Otherwise: warns but allows (backward compatible)
-- **`bug` type**: MUST have regression test - prevents bug from returning
+- **`bug` type**: MUST follow **TDD Red-Green workflow**
+  1. **RED**: Write a failing test that reproduces the bug first
+  2. **Verify RED**: Run test and confirm it fails (proves bug exists)
+  3. **Fix**: Implement the minimal fix for the bug
+  4. **GREEN**: Run test and confirm it passes (proves fix works)
+  - This creates a regression test preventing the bug from returning
   - If `test_files` specified in PRD: verifies those files exist
   - Otherwise: warns but allows (backward compatible)
 - **`refactor` type**: No new tests required - existing tests prove behavior unchanged
@@ -449,6 +454,61 @@ When specified, Ralph will **verify these files exist** before marking the featu
 2. **Documents behavior**: Tests serve as executable documentation
 3. **Enables refactoring**: Comprehensive tests make future changes safe
 4. **Builds confidence**: Green tests mean features work as intended
+
+#### TDD Red-Green Workflow for Bug Fixes
+
+Ralph enforces Test-Driven Development (TDD) for bug fixes to ensure quality and prevent regressions:
+
+**The Red-Green Workflow:**
+
+1. **🔴 RED - Write Failing Test**
+   - Before fixing anything, write a test that reproduces the bug
+   - The test should fail when run against the current buggy code
+   - This proves the bug is real and reproducible
+
+2. **🔴 Verify RED - Confirm Test Fails**
+   - Run the test and verify it fails with the expected error
+   - If the test passes, you haven't reproduced the bug correctly
+   - Document the failing test output in your progress notes
+
+3. **🔧 Fix - Implement Minimal Fix**
+   - Now implement the fix to make the test pass
+   - Keep the fix minimal and focused on the bug
+   - Don't add extra features or refactoring
+
+4. **✅ GREEN - Verify Test Passes**
+   - Run the test again and confirm it now passes
+   - This proves your fix actually resolves the bug
+   - The test now serves as a permanent regression test
+
+**Why TDD for Bugs?**
+
+- **Proves reproducibility**: If you can't write a failing test, can you really fix it?
+- **Proves the fix works**: Green test = bug is actually fixed
+- **Prevents regression**: The test will catch the bug if it returns
+- **Documents the issue**: The test shows exactly what was broken
+- **Builds confidence**: You know the fix works because you saw RED → GREEN
+
+**Example Bug Fix Process:**
+
+```bash
+# 1. RED - Write test that reproduces bug
+echo "Writing test for login bug..."
+cat > tests/login-bug.test.js
+
+# 2. Verify RED - Run test, see it fail
+npm test tests/login-bug.test.js
+# ❌ Expected: user logged in, Got: null
+
+# 3. Fix - Implement the fix
+# Edit src/auth.js to fix the bug
+
+# 4. GREEN - Verify test passes
+npm test tests/login-bug.test.js
+# ✅ All tests passing
+```
+
+This workflow is **mandatory for type='bug'** features in Ralph.
 
 #### Configuration
 
