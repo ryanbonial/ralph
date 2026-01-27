@@ -23,8 +23,7 @@ Result: Feature 000a complete, fully tested, documented, and committed
 
 ❯ # AI Coding Agent Prompt - Ralph Wiggum Technique
 
-You are an autonomous software engineering agent working incrementally across multiple context windows. Your goal is to make consistent, verifiable progress on a
-single feature per session.
+You are an autonomous software engineering agent working incrementally across multiple context windows. Your goal is to make consistent, verifiable progress on a single feature per session.
 
 ## Your Environment
 
@@ -98,18 +97,14 @@ Review `.ralph/prd.json` and identify the single highest-priority feature where 
 **Selection Criteria:**
 
 1. **Check Dependencies**: Feature's `depends_on` array must only contain feature IDs where `"passes": true`
-
-- If dependencies aren't met, skip to next feature
-- If a feature has `"blocked_reason"` set, it's blocked - skip it
-
+   - If dependencies aren't met, skip to next feature
+   - If a feature has `"blocked_reason"` set, it's blocked - skip it
 2. **Priority Order**: `critical` > `high` > `medium` > `low`
 3. **Type Consideration**:
-
-- `feature`: New functionality
-- `bug`: Fix broken behavior
-- `refactor`: Improve code quality without changing behavior
-- `test`: Add or improve tests
-
+   - `feature`: New functionality
+   - `bug`: Fix broken behavior
+   - `refactor`: Improve code quality without changing behavior
+   - `test`: Add or improve tests
 4. **Complexity**: Consider starting with `small` features when possible
 5. **Logical Flow**: What makes sense based on what's already done?
 
@@ -133,7 +128,24 @@ Briefly outline based on feature type:
 
 **For `bug` type:**
 
-- What is the root cause?
+**CRITICAL - TDD Red-Green Workflow Required:**
+
+Bug fixes MUST follow Test-Driven Development (TDD) approach:
+
+1. **Write Failing Test First (RED)**: Before touching any code, write a test that reproduces the bug
+   - The test should fail when run against the current buggy code
+   - This proves the bug is real and reproducible
+2. **Verify Test Fails**: Run the test and confirm it fails with the expected error
+   - If the test passes, you haven't reproduced the bug correctly
+   - Document what the failing test output shows
+3. **Fix the Bug**: Now implement the minimal fix to make the test pass
+   - Focus on fixing only what's needed for the test to pass
+4. **Verify Test Passes (GREEN)**: Run the test again and confirm it now passes
+   - This proves your fix actually resolves the bug
+   - The test now serves as a regression test to prevent the bug from returning
+
+**Planning Questions:**
+- What is the root cause of the bug?
 - What files need to be fixed?
 - How to verify the bug is resolved?
 
@@ -200,27 +212,23 @@ npm test  # or pnpm test, or pytest, or cargo test
 **CRITICAL - Quality Gates:**
 
 1. **Formatting**: Code must be properly formatted according to project standards
-
-- If prettier/black/gofmt exists in project, formatting MUST pass
-- Fix formatting issues before marking complete
+   - If prettier/black/gofmt exists in project, formatting MUST pass
+   - Fix formatting issues before marking complete
 
 2. **Linting**: All linting errors MUST be resolved
-
-- Linting is NOT optional - errors block completion
-- Warnings should be addressed when possible
-- Do not disable lint rules without good reason
+   - Linting is NOT optional - errors block completion
+   - Warnings should be addressed when possible
+   - Do not disable lint rules without good reason
 
 3. **Type Safety**: Type checking MUST pass (if applicable)
-
-- TypeScript projects: zero type errors required
-- Python with type hints: mypy must pass
-- Other typed languages: type checker must pass
+   - TypeScript projects: zero type errors required
+   - Python with type hints: mypy must pass
+   - Other typed languages: type checker must pass
 
 4. **Tests**: All tests MUST pass
-
-- Existing tests must not break
-- New functionality should have tests
-- Edge cases should be covered
+   - Existing tests must not break
+   - New functionality should have tests
+   - Edge cases should be covered
 
 **DO NOT mark a feature as passing without ALL quality checks passing.**
 
@@ -394,13 +402,13 @@ You are part of a continuous loop. Your job is to:
 ⎿  $HOME/code/ralph
 
 ⏺ Read(.ralph/progress.txt)
-⎿  Read 158 lines
+⎿  Read 158 lines
 
 ⏺ Read(.ralph/prd.json)
-⎿  Read 471 lines
+⎿  Read 471 lines
 
 ⏺ Bash(git log --oneline -20)
-⎿  53d470b prd: add auto-branch creation feature for protected branches
+⎿  53d470b prd: add auto-branch creation feature for protected branches
 24ff22d prd: add Sanity CMS integration features for PRD storage
 2b513ce prd: add new features for test output optimization and sandboxed execution
 … +9 lines (ctrl+o to expand)
@@ -415,13 +423,13 @@ You are part of a continuous loop. Your job is to:
 Let me check the current git status to understand what's been staged or modified.
 
 ⏺ Bash(git status)
-⎿  On branch feat/auto-branch-creation
+⎿  On branch feat/auto-branch-creation
 nothing to commit, working tree clean
 
 ⏺ Perfect! Clean working tree. Now let me verify existing functionality by checking if ralph.sh runs properly.
 
 ⏺ Bash(bash -n ralph.sh)
-⎿  (No content)
+⎿  (No content)
 
 ⏺ Excellent! The script syntax is valid. Now let me analyze the feature list and select the next feature to work on.
 
@@ -459,7 +467,7 @@ This feature will automatically create a feature branch when Ralph is run on a p
 Let me start by reading ralph.sh to understand its current structure.
 
 ⏺ Read(ralph.sh)
-⎿  Read 563 lines
+⎿  Read 563 lines
 
 ⏺ Perfect! Now I understand the structure. Let me update the todo status and implement the feature.
 
@@ -477,10 +485,10 @@ Implementation Plan:
 Let me implement this:
 
 ⏺ Update(ralph.sh)
-⎿  Added 2 lines
+⎿  Added 2 lines
 17 PROTECTED_BRANCHES="${PROTECTED_BRANCHES:-main,master}"
-      18   # Allow git push operations (default: false for safety)
-      19   ALLOW_GIT_PUSH="${ALLOW_GIT_PUSH:-false}"
+    18   # Allow git push operations (default: false for safety)
+    19   ALLOW_GIT_PUSH="${ALLOW_GIT_PUSH:-false}"
 20 + # Auto-create feature branches when on protected branch (default: true)
 21 + AUTO_CREATE_BRANCH="${AUTO_CREATE_BRANCH:-true}"
 22
@@ -490,7 +498,7 @@ Let me implement this:
 ⏺ Good! Now let me add functions to get the next feature from PRD and generate branch names. I'll add these after the suggest_feature_branch() function:
 
 ⏺ Update(ralph.sh)
-⎿  Added 118 lines
+⎿  Added 118 lines
 122 echo ""
 123 }
 124
@@ -508,68 +516,68 @@ Let me implement this:
 136 +
 137 + try:
 138 + with open('$PRD_FILE', 'r') as f:
-      139 +         prd = json.load(f)
-      140 +
-      141 +     features = prd.get('features', [])
-      142 +
-      143 +     # Priority order
-      144 +     priority_order = {'critical': 0, 'high': 1, 'medium': 2, 'low': 3}
-      145 +
-      146 +     # Filter to incomplete features with met dependencies
-      147 +     candidates = []
-      148 +     for feature in features:
-      149 +         if feature.get('passes', False):
-      150 +             continue
-      151 +         if feature.get('blocked_reason'):
-      152 +             continue
-      153 +
-      154 +         # Check dependencies
-      155 +         depends_on = feature.get('depends_on', [])
-      156 +         deps_met = True
-      157 +         for dep_id in depends_on:
-      158 +             dep_feature = next((f for f in features if f.get('id') == dep_id), None)
-      159 +             if not dep_feature or not dep_feature.get('passes', False):
-      160 +                 deps_met = False
-      161 +                 break
-      162 +
-      163 +         if deps_met:
-      164 +             candidates.append(feature)
-      165 +
-      166 +     if not candidates:
-      167 +         sys.exit(1)
-      168 +
-      169 +     # Sort by priority
-      170 +     candidates.sort(key=lambda f: (
-      171 +         priority_order.get(f.get('priority', 'low'), 99),
-      172 +         f.get('id', '')
-      173 +     ))
-      174 +
-      175 +     # Output first candidate as JSON
-      176 +     print(json.dumps(candidates[0]))
-      177 + except Exception as e:
-      178 +     sys.stderr.write(f'Error parsing PRD: {e}\n')
-      179 +     sys.exit(1)
-      180 + " 2>/dev/null
-      181 + }
-      182 +
-      183 + # Generate branch name from feature
-      184 + generate_branch_name() {
-      185 +     local feature_json="$1"
-      186 +
-      187 +     if [ -z "$feature_json" ]; then
+    139 +         prd = json.load(f)
+    140 +
+    141 +     features = prd.get('features', [])
+    142 +
+    143 +     # Priority order
+    144 +     priority_order = {'critical': 0, 'high': 1, 'medium': 2, 'low': 3}
+    145 +
+    146 +     # Filter to incomplete features with met dependencies
+    147 +     candidates = []
+    148 +     for feature in features:
+    149 +         if feature.get('passes', False):
+    150 +             continue
+    151 +         if feature.get('blocked_reason'):
+    152 +             continue
+    153 +
+    154 +         # Check dependencies
+    155 +         depends_on = feature.get('depends_on', [])
+    156 +         deps_met = True
+    157 +         for dep_id in depends_on:
+    158 +             dep_feature = next((f for f in features if f.get('id') == dep_id), None)
+    159 +             if not dep_feature or not dep_feature.get('passes', False):
+    160 +                 deps_met = False
+    161 +                 break
+    162 +
+    163 +         if deps_met:
+    164 +             candidates.append(feature)
+    165 +
+    166 +     if not candidates:
+    167 +         sys.exit(1)
+    168 +
+    169 +     # Sort by priority
+    170 +     candidates.sort(key=lambda f: (
+    171 +         priority_order.get(f.get('priority', 'low'), 99),
+    172 +         f.get('id', '')
+    173 +     ))
+    174 +
+    175 +     # Output first candidate as JSON
+    176 +     print(json.dumps(candidates[0]))
+    177 + except Exception as e:
+    178 +     sys.stderr.write(f'Error parsing PRD: {e}\n')
+    179 +     sys.exit(1)
+    180 + " 2>/dev/null
+    181 + }
+    182 +
+    183 + # Generate branch name from feature
+    184 + generate_branch_name() {
+    185 +     local feature_json="$1"
+    186 +
+    187 +     if [ -z "$feature_json" ]; then
 188 + # Fallback to generic name with timestamp
 189 + echo "feature/ralph-$(date +%Y%m%d-%H%M%S)"
-      190 +         return
-      191 +     fi
-      192 +
-      193 +     # Parse feature JSON
-      194 +     local feature_id=$(echo "$feature_json" | python3 -c "import json,sys; print(json.load(sys.stdin).get('id', ''))")
-      195 +     local feature_type=$(echo "$feature_json" | python3 -c "import json,sys; print(json.load(sys.stdin).get('type', 'feature'))")
-      196 +     local feature_desc=$(echo "$feature_json" | python3 -c "import json,sys; print(json.load(sys.stdin).get('description', ''))")
-      197 +
-      198 +     # Determine branch prefix based on type
-      199 +     local prefix="feature"
-      200 +     case "$feature_type" in
+    190 +         return
+    191 +     fi
+    192 +
+    193 +     # Parse feature JSON
+    194 +     local feature_id=$(echo "$feature_json" | python3 -c "import json,sys; print(json.load(sys.stdin).get('id', ''))")
+    195 +     local feature_type=$(echo "$feature_json" | python3 -c "import json,sys; print(json.load(sys.stdin).get('type', 'feature'))")
+    196 +     local feature_desc=$(echo "$feature_json" | python3 -c "import json,sys; print(json.load(sys.stdin).get('description', ''))")
+    197 +
+    198 +     # Determine branch prefix based on type
+    199 +     local prefix="feature"
+    200 +     case "$feature_type" in
 201 + bug) prefix="bugfix" ;;
 202 + refactor) prefix="refactor" ;;
 203 + test) prefix="test" ;;
@@ -582,7 +590,7 @@ Let me implement this:
 210 + # Construct branch name
 211 + if [ -n "$feature_id" ] && [ -n "$slug" ]; then
 212 + echo "${prefix}/${feature_id}-${slug}"
-      213 +     elif [ -n "$feature_id" ]; then
+    213 +     elif [ -n "$feature_id" ]; then
 214 + echo "${prefix}/${feature_id}"
 215 + else
 216 + echo "${prefix}/ralph-$(date +%Y%m%d-%H%M%S)"
@@ -592,17 +600,17 @@ Let me implement this:
 220 + # Auto-create and checkout feature branch
 221 + auto_create_feature_branch() {
 222 + local branch_name="$1"
-      223 +
-      224 +     if [ -z "$branch_name" ]; then
+    223 +
+    224 +     if [ -z "$branch_name" ]; then
 225 + log_error "No branch name provided"
 226 + return 1
 227 + fi
 228 +
 229 + log_info "Auto-creating feature branch: $branch_name"
-      230 +
-      231 +     if git show-ref --verify --quiet "refs/heads/$branch_name"; then
+    230 +
+    231 +     if git show-ref --verify --quiet "refs/heads/$branch_name"; then
 232 + log_warning "Branch $branch_name already exists, checking out..."
-      233 +         git checkout "$branch_name"
+    233 +         git checkout "$branch_name"
 234 + else
 235 + log_info "Creating new branch from current HEAD..."
 236 + git checkout -b "$branch_name"
@@ -619,7 +627,7 @@ Let me implement this:
 ⏺ Excellent! Now I need to update the check_prerequisites() function to integrate the auto-branch creation. I also need to add support for the --branch-name parameter. Let me first add parameter parsing at the top of the main() function, then update check_prerequisites():
 
 ⏺ Update(ralph.sh)
-⎿  Added 46 lines, removed 2 lines
+⎿  Added 46 lines, removed 2 lines
 246
 247 # Check if on protected branch
 248 if is_protected_branch; then
@@ -627,12 +635,12 @@ Let me implement this:
 250 - exit 1
 249 + if [ "$AUTO_CREATE_BRANCH" = "true" ]; then
 250 + log_warning "Currently on protected branch: $(git rev-parse --abbrev-ref HEAD)"
-      251 +             echo ""
-      252 +
-      253 +             # Check if user provided custom branch name
-      254 +             if [ -n "$CUSTOM_BRANCH_NAME" ]; then
+    251 +             echo ""
+    252 +
+    253 +             # Check if user provided custom branch name
+    254 +             if [ -n "$CUSTOM_BRANCH_NAME" ]; then
 255 + log_info "Using custom branch name: $CUSTOM_BRANCH_NAME"
-      256 +                 auto_create_feature_branch "$CUSTOM_BRANCH_NAME" || {
+    256 +                 auto_create_feature_branch "$CUSTOM_BRANCH_NAME" || {
 257 + suggest_feature_branch
 258 + exit 1
 259 + }
@@ -640,16 +648,16 @@ Let me implement this:
 261 + # Auto-detect next feature and create branch
 262 + log_info "AUTO_CREATE_BRANCH is enabled, inspecting PRD for next feature..."
 263 + local next_feature=$(get_next_feature_from_prd)
-      264 +
-      265 +                 if [ -n "$next_feature" ]; then
+    264 +
+    265 +                 if [ -n "$next_feature" ]; then
 266 + local feature_desc=$(echo "$next_feature" | python3 -c "import json,sys; print(json.load(sys.stdin).get('description', ''))")
 267 + log_info "Next feature: $feature_desc"
-      268 +
-      269 +                     local branch_name=$(generate_branch_name "$next_feature")
-      270 +                     log_info "Generated branch name: $branch_name"
-      271 +                     echo ""
-      272 +
-      273 +                     auto_create_feature_branch "$branch_name" || {
+    268 +
+    269 +                     local branch_name=$(generate_branch_name "$next_feature")
+    270 +                     log_info "Generated branch name: $branch_name"
+    271 +                     echo ""
+    272 +
+    273 +                     auto_create_feature_branch "$branch_name" || {
 274 + suggest_feature_branch
 275 + exit 1
 276 + }
@@ -657,7 +665,7 @@ Let me implement this:
 278 + log_warning "Could not determine next feature from PRD"
 279 + log_info "Creating generic feature branch..."
 280 + local fallback_branch="feature/ralph-$(date +%Y%m%d-%H%M%S)"
-      281 +                     auto_create_feature_branch "$fallback_branch" || {
+    281 +                     auto_create_feature_branch "$fallback_branch" || {
 282 + suggest_feature_branch
 283 + exit 1
 284 + }
@@ -678,7 +686,7 @@ Let me implement this:
 ⏺ Good! Now I need to add parameter parsing in the main() function to support the --branch-name parameter:
 
 ⏺ Update(ralph.sh)
-⎿  Added 33 lines
+⎿  Added 33 lines
 707
 708 # Main execution
 709 main() {
@@ -722,54 +730,54 @@ Let me implement this:
 ⏺ Perfect! Now let me update the todos and verify the syntax:
 
 ⏺ Bash(bash -n ralph.sh)
-⎿  (No content)
+⎿  (No content)
 
 ⏺ Excellent! Syntax is valid. Now let me update the README.md documentation:
 
 ⏺ Read(README.md)
-⎿  Read 100 lines
+⎿  Read 100 lines
 
 ⏺ Let me find the Git Safety Options section in the README:
 
 ⏺ Search(pattern: "Git Safety", path: "README.md", output_mode: "content")
-⎿  Found 1 line (ctrl+o to expand)
+⎿  Found 1 line (ctrl+o to expand)
 
 ⏺ Read(README.md)
-⎿  Read 89 lines
+⎿  Read 89 lines
 
 ⏺ Perfect! Now I'll add documentation about the auto-branch creation feature right after the Git Safety Options section:
 
 ⏺ Update(README.md)
-⎿  Added 64 lines
+⎿  Added 64 lines
 555 ./ralph.sh
-556 ``      557
-      558 + #### Auto-Branch Creation (New!)
-      559 +
-      560 + Ralph can automatically create feature branches when you run it on a protected branch (like `main` or `master`). This eliminates the manual step of
-          +creating branches!
-      561 +
-      562 + **How it works:**
-      563 +
-      564 + 1. Run Ralph on a protected branch (e.g., `main`)
-      565 + 2. Ralph inspects your PRD to find the next feature to implement
-      566 + 3. Ralph auto-generates a branch name based on the feature type and description
-      567 + 4. Ralph creates and switches to the new branch
-      568 + 5. Ralph proceeds with the iteration
-      569 +
-      570 + **Branch naming convention:**
-      571 +
-      572 + - `feature/{id}-{slug}` - for type: "feature"
-      573 + - `bugfix/{id}-{slug}` - for type: "bug"
-      574 + - `refactor/{id}-{slug}` - for type: "refactor"
-      575 + - `test/{id}-{slug}` - for type: "test"
-      576 +
-      577 + Example: Feature `000a` with description "Auto-create feature branches..." becomes:
-      578 +``
+556 ``    557
+    558 + #### Auto-Branch Creation (New!)
+    559 +
+    560 + Ralph can automatically create feature branches when you run it on a protected branch (like `main` or `master`). This eliminates the manual step of
+        +creating branches!
+    561 +
+    562 + **How it works:**
+    563 +
+    564 + 1. Run Ralph on a protected branch (e.g., `main`)
+    565 + 2. Ralph inspects your PRD to find the next feature to implement
+    566 + 3. Ralph auto-generates a branch name based on the feature type and description
+    567 + 4. Ralph creates and switches to the new branch
+    568 + 5. Ralph proceeds with the iteration
+    569 +
+    570 + **Branch naming convention:**
+    571 +
+    572 + - `feature/{id}-{slug}` - for type: "feature"
+    573 + - `bugfix/{id}-{slug}` - for type: "bug"
+    574 + - `refactor/{id}-{slug}` - for type: "refactor"
+    575 + - `test/{id}-{slug}` - for type: "test"
+    576 +
+    577 + Example: Feature `000a` with description "Auto-create feature branches..." becomes:
+    578 +``
 579 + feature/000a-auto-create-feature-branches
-580 + `      581 +
-      582 + **Usage:**
-      583 +
-      584 +`bash
+580 + `    581 +
+    582 + **Usage:**
+    583 +
+    584 +`bash
 585 + # Auto-create branch (enabled by default)
 586 + cd /path/to/your/project
 587 + git checkout main
@@ -784,10 +792,10 @@ Let me implement this:
 596 +
 597 + # Help
 598 + ./ralph.sh --help
-599 + `      600 +
-      601 + **Configuration:**
-      602 +
-      603 +`bash
+599 + `    600 +
+    601 + **Configuration:**
+    602 +
+    603 +`bash
 604 + # Enable/disable auto-branch creation (default: true)
 605 + AUTO_CREATE_BRANCH=true ./ralph.sh
 606 +
@@ -796,32 +804,32 @@ Let me implement this:
 609 +
 610 + # Works with other options
 611 + RUN_MODE=continuous AUTO_CREATE_BRANCH=true ./ralph.sh
-612 + `    613 +
-      614 + **Benefits:**
-      615 +
-      616 + - ✅ No more manually creating feature branches
-      617 + - ✅ Consistent branch naming across your project
-      618 + - ✅ Branch names match the feature being implemented
-      619 + - ✅ Safe to run Ralph on main - it automatically moves to a feature branch
-      620 + - ✅ Conventional branch prefixes (feature/, bugfix/, etc.) for better organization
-      621 +
-      622   ### Combine Options
-      623
-      624`bash
+612 + `  613 +
+    614 + **Benefits:**
+    615 +
+    616 + - ✅ No more manually creating feature branches
+    617 + - ✅ Consistent branch naming across your project
+    618 + - ✅ Branch names match the feature being implemented
+    619 + - ✅ Safe to run Ralph on main - it automatically moves to a feature branch
+    620 + - ✅ Conventional branch prefixes (feature/, bugfix/, etc.) for better organization
+    621 +
+    622   ### Combine Options
+    623
+    624`bash
 
 ⏺ Excellent! Now let me update the todos and run quality gates:
 
 ⏺ Now let me check if there are any quality gates configured for this project:
 
 ⏺ Bash([ -f package.json ] && echo "package.json exists" || echo "no package.json")
-⎿  no package.json
+⎿  no package.json
 
 ⏺ Since this is a bash script project with no package.json, there are no linting/formatting/type-checking/test configurations. The main quality check is bash syntax validation, which already passed. Let me mark quality gates as complete and move on to updating the PRD and progress log:
 
 ⏺ Now let me update the PRD to mark feature 000a as complete:
 
 ⏺ Update(.ralph/prd.json)
-⎿  Added 2 lines, removed 2 lines
+⎿  Added 2 lines, removed 2 lines
 23 ],
 24 "estimated_complexity": "small",
 25 "depends_on": [],
@@ -837,24 +845,24 @@ Let me implement this:
 
 ⏺ Bash(cat >> .ralph/progress.txt << 'EOF'
 --- 2026-01-08 15:00 ---…)
-⎿  (No content)
+⎿  (No content)
 
 ⏺ Excellent! Now let me update the todo and create a git commit:
 
 ⏺ Bash(git add -A && git commit -m "feat: add auto-branch creation for protected branches…)
-⎿  [feat/auto-branch-creation b833a00] feat: add auto-branch creation for protected branches
+⎿  [feat/auto-branch-creation b833a00] feat: add auto-branch creation for protected branches
 4 files changed, 305 insertions(+), 4 deletions(-)
 
 ⏺ Perfect! Now let me verify the commit and check for completion status:
 
 ⏺ Bash(git log -1 --oneline && echo "" && git status)
-⎿  b833a00 feat: add auto-branch creation for protected branches
+⎿  b833a00 feat: add auto-branch creation for protected branches
 
-     On branch feat/auto-branch-creation
-     nothing to commit, working tree clean
+    On branch feat/auto-branch-creation
+    nothing to commit, working tree clean
 
 ⏺ Bash(grep -c '"passes": false' .ralph/prd.json || echo "0")
-⎿  15
+⎿  15
 
 ⏺ Excellent! The commit was created successfully. There are still 15 incomplete features remaining, so the project is not complete yet. Let me update the final todo:
 
