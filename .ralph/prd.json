@@ -775,6 +775,56 @@
       "test_files": [
         "tests/ralph-progress-header.bats"
       ]
+    },
+    {
+      "id": "029",
+      "type": "feature",
+      "category": "infrastructure",
+      "priority": "critical",
+      "description": "Persist failure context to progress.txt after rollback so next iteration can learn from mistakes",
+      "steps": [
+        "Problem: When ROLLBACK_ON_FAILURE=true and tests fail, git reset --hard HEAD~1 destroys ALL context about the failure",
+        "Problem: Agent updated progress.txt with implementation notes, but that was part of rolled-back commit - context is lost",
+        "Problem: Next iteration starts with NO knowledge of what just failed, repeating same mistakes",
+        "Create log_failure_context() function to capture failure details AFTER rollback completes",
+        "Function should extract: feature ID/description being worked on, which quality gates failed, error messages from test output",
+        "Capture linting errors from /tmp/ralph_lint.log if linting failed",
+        "Capture type checking errors from /tmp/ralph_typecheck.log if types failed",
+        "Capture test failures from /tmp/ralph_test.log if tests failed (use extract_failing_tests to get specific failures)",
+        "Capture formatting issues from /tmp/ralph_format_check.log if formatting failed",
+        "After rollback_last_commit() completes, call log_failure_context() to append to progress.txt",
+        "Format: '--- ROLLBACK: [timestamp] ---\\nFeature: [ID] [description]\\nReason: Quality gates failed\\nFailed Gates: [list]\\nError Details:\\n[captured errors]\\n---'",
+        "Update both run_single_iteration() and run_continuous_loop() to call log_failure_context() after rollback",
+        "Ensure progress.txt update happens AFTER git reset (so it survives the rollback)",
+        "Update AGENT_PROMPT.md to tell agent to check for ROLLBACK entries in progress.txt for learning context",
+        "Test: Trigger a failing test, verify rollback occurs, verify progress.txt contains failure details, verify next iteration can see the failure context",
+        "Test: Verify captured errors are useful (show actual test failures, linting errors, etc., not just 'tests failed')",
+        "Document the failure learning mechanism in GETTING_STARTED.md"
+      ],
+      "estimated_complexity": "medium",
+      "depends_on": [
+        "000",
+        "010"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null,
+      "test_files": [
+        "tests/ralph-failure-learning.bats"
+      ],
+      "acceptance_criteria": {
+        "unit_tests": [],
+        "e2e_tests": [
+          "tests/ralph-failure-learning.bats"
+        ],
+        "manual_checks": [
+          "Run Ralph with a feature that intentionally fails linting",
+          "Verify rollback occurs and git commit is reverted",
+          "Check progress.txt contains ROLLBACK entry with linting error details",
+          "Run Ralph again and verify agent can see the previous failure context",
+          "Confirm error messages are specific enough to guide fixes (not generic 'failed' messages)"
+        ]
+      }
     }
   ],
   "notes": [
@@ -801,6 +851,10 @@
     "Feature 028 issue 1: Header shows feature from branch name (001) instead of actual selected feature (027)",
     "Feature 028 issue 2: Header is printed too early, before Ralph determines which feature to actually work on",
     "Feature 028 solution: Move header display to AFTER feature selection, pass selected feature explicitly",
+    "Feature 029 is CRITICAL: Persist failure context after rollback so Ralph learns from mistakes (NEW)",
+    "Feature 029 problem: When rollback occurs, ALL context about the failure is destroyed (was in the rolled-back commit)",
+    "Feature 029 issue: Next iteration has no knowledge of what failed, repeating same mistakes indefinitely",
+    "Feature 029 solution: Capture failure details (which gates failed, error messages) AFTER rollback, append to progress.txt",
     "Feature 001 adds auto-PR creation with GitHub CLI (reduced scope - 000a covers branch creation)",
     "Features 002-006 implement the remaining improvements from the analysis",
     "Feature 007 improves code quality of ralph.sh (COMPLETE)",
