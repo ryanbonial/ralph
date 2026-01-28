@@ -1353,6 +1353,137 @@ See `.ralph/sanity/README.md` for:
 4. Run Ralph with `PRD_STORAGE=sanity`
 5. (Optional) Implement Sanity Studio UI for visual editing (Feature 016)
 
+### Progress Header (Feature 024)
+
+Ralph displays a persistent progress header at the top of your terminal that shows the current feature being worked on and overall completion statistics. This helps you understand what Ralph is doing and how much work remains.
+
+**Configuration:**
+
+```bash
+# Enable progress header (default: true)
+SHOW_PROGRESS_HEADER=true ./ralph.sh
+
+# Disable progress header
+SHOW_PROGRESS_HEADER=false ./ralph.sh
+```
+
+**What the header shows:**
+
+- **Current Feature**: Feature ID, type, and description of the feature being worked on
+- **Progress Stats**: Completion percentage, completed features, blocked features, remaining features
+
+**Example Header:**
+
+```
+═══════════════════════════════════════════════════════════════════
+🎯 Current: [024] - feature - Add persistent progress header
+📊 Progress: 15/23 (65%) complete | 1 blocked | 7 remaining
+═══════════════════════════════════════════════════════════════════
+```
+
+**Technical Implementation:**
+
+The header uses terminal control sequences (`tput`) to:
+1. Save the current cursor position
+2. Move cursor to top of screen (row 0, column 0)
+3. Display the header with color coding:
+   - 🟢 Green: Completed features
+   - 🟡 Yellow: Current/remaining features
+   - 🔴 Red: Blocked features
+4. Restore cursor to original position
+
+This makes the header remain visible at the top of the terminal while Claude's output continues below.
+
+**When it displays:**
+
+- At the start of each Ralph iteration
+- After feature selection (shows the actual selected feature, not a guess)
+- Before the agent starts working
+
+**Benefits:**
+
+- ✅ **At-a-Glance Status**: Know what Ralph is working on without reading logs
+- ✅ **Progress Tracking**: See completion percentage and remaining work
+- ✅ **Context Preservation**: Header stays visible during agent execution
+- ✅ **Visual Feedback**: Color-coded indicators for different states
+- ✅ **Accurate Display**: Shows actual selected feature, not stale branch info
+
+**Note:** The header respects `LOG_LEVEL=ERROR` mode and won't display in quiet mode.
+
+### Failure Learning / Rollback Context (Feature 029)
+
+When Ralph's quality gates fail and a commit is rolled back, the failure context is preserved in `progress.txt` so the next iteration can learn from the mistakes. This breaks the failure loop where agents repeatedly attempt the same failing approach.
+
+**How it works:**
+
+1. Quality gates run after commit (linting, type checking, tests, formatting)
+2. If any gate fails, `git reset --hard HEAD~1` rolls back the commit
+3. **BEFORE the rollback:** Ralph would lose all context about what failed
+4. **AFTER Feature 029:** Ralph captures failure details and appends to `progress.txt` AFTER the rollback
+5. Next iteration reads `progress.txt` and sees exactly what went wrong
+
+**What gets captured:**
+
+- **Feature Info**: Which feature was being worked on (ID and description)
+- **Failed Gates**: Which quality checks failed (linting, type checking, tests, formatting)
+- **Error Details**: Actual error messages from the failed gates:
+  - Linting errors from `/tmp/ralph_lint.log`
+  - Type checking errors from `/tmp/ralph_typecheck.log`
+  - Test failures from `/tmp/ralph_test.log` (with specific failing tests)
+  - Formatting issues from `/tmp/ralph_format_check.log`
+- **Guidance**: Suggestions for the next iteration
+
+**ROLLBACK Entry Format:**
+
+```
+--- ROLLBACK: 2025-01-28 15:30:00 ---
+Feature: [029] Persist failure context after rollback
+Rolled Back Commit: "feat: add failure context logging"
+
+QUALITY GATES FAILED:
+❌ Linting errors detected
+
+ERROR DETAILS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ralph.sh:1234:15: error: unused variable 'foo'
+ralph.sh:1245:22: error: missing semicolon
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GUIDANCE FOR NEXT ITERATION:
+- Fix linting errors shown above
+- Run `npm run lint` before marking feature complete
+- Ensure all quality gates pass before committing
+---
+```
+
+**How agents use this:**
+
+The `AGENT_PROMPT.md` instructs agents to check for `ROLLBACK` entries in `progress.txt` at the start of each iteration:
+
+1. Read `progress.txt` and look for recent `ROLLBACK` entries
+2. If found, read the error details carefully
+3. Avoid repeating the same mistakes
+4. Apply the guidance to fix the issues
+
+**Benefits:**
+
+- ✅ **Break Failure Loops**: Agents learn from failed attempts instead of repeating them
+- ✅ **Specific Error Context**: Actual error messages guide fixes, not generic "tests failed"
+- ✅ **Persistent Learning**: Context survives rollback (not destroyed by `git reset`)
+- ✅ **Incremental Debugging**: Each iteration builds on previous attempts
+- ✅ **Actionable Guidance**: Clear suggestions for what to fix
+
+**Configuration:**
+
+Failure learning is automatically enabled when `ROLLBACK_ON_FAILURE=true` (the default). No additional configuration needed—it just works!
+
+**Example Workflow:**
+
+1. **Iteration 1**: Agent implements feature, commits, quality gates fail (linting errors)
+2. Ralph rolls back commit but saves failure context to `progress.txt`
+3. **Iteration 2**: Agent reads `ROLLBACK` entry, sees linting errors, fixes them, commits successfully
+4. Feature is now complete with proper quality
+
 ### Combine Options
 
 ```bash
