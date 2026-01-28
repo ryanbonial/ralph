@@ -253,6 +253,7 @@ except Exception as e:
 }
 
 # Display progress header with current task and stats
+# Uses terminal control sequences to keep header static at top of screen
 display_progress_header() {
     # Only show if enabled and not in quiet mode
     if [ "$SHOW_PROGRESS_HEADER" != "true" ]; then
@@ -286,17 +287,28 @@ display_progress_header() {
         percentage=$(( completed * 100 / total ))
     fi
 
-    # Display header with color coding
+    # Save current cursor position so we can return to it after displaying header
+    tput sc
+
+    # Move cursor to top of screen (row 0, column 0) to display header there
+    tput cup 0 0
+
+    # Display header with color coding (each line clears to end with tput el)
     echo ""
+    tput el
     echo -e "${BLUE}═══════════════════════════════════════════════════════════════════${NC}"
+    tput el
 
     # Current feature line
     if [ "$feature_id" = "none" ]; then
         echo -e "${GREEN}🎯 Current: All features complete!${NC}"
+        tput el
     elif [ "$feature_id" = "error" ]; then
         echo -e "${RED}🎯 Current: Error reading PRD${NC}"
+        tput el
     else
         echo -e "${YELLOW}🎯 Current: [$feature_id] - $feature_type - $description${NC}"
+        tput el
     fi
 
     # Progress statistics line
@@ -308,9 +320,15 @@ display_progress_header() {
         stats_line="$stats_line | ${YELLOW}$remaining remaining${NC}"
     fi
     echo -e "$stats_line"
+    tput el
 
     echo -e "${BLUE}═══════════════════════════════════════════════════════════════════${NC}"
+    tput el
     echo ""
+    tput el
+
+    # Restore cursor to original position so subsequent output continues where it was
+    tput rc
 }
 
 # ==========================================
