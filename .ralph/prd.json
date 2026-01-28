@@ -743,6 +743,38 @@
       "test_files": [
         "tests/ralph-commit-detection.bats"
       ]
+    },
+    {
+      "id": "028",
+      "type": "bug",
+      "category": "infrastructure",
+      "priority": "critical",
+      "description": "Fix progress header to show correct feature after selection, not from branch name",
+      "steps": [
+        "TDD RED: Write test that verifies header displays the actual selected feature, not branch-based feature",
+        "TDD RED: Run test and confirm it fails (demonstrates current bug: header shows wrong feature)",
+        "Investigate display_progress_header() - currently extracts feature from branch name instead of selected feature",
+        "Problem 1: Header shows feature from branch name (e.g., 001) instead of actual next feature selected (e.g., 027)",
+        "Problem 2: Header is printed too early (before feature selection logic runs)",
+        "Solution: Move display_progress_header() to AFTER select_next_feature() determines which feature to work on",
+        "Pass the selected feature ID/description to display_progress_header() instead of parsing from branch name",
+        "Update header to accept parameters: feature_id, feature_type, feature_description from selection logic",
+        "Remove branch name parsing from display_progress_header() - use explicit parameters instead",
+        "Ensure header is printed after '[INFO] Next feature:' message, not before",
+        "TDD GREEN: Run test and verify it passes (header shows correct selected feature)",
+        "Test: Run Ralph on branch feature/001, verify header shows feature 027 (or whichever is actually selected)",
+        "Document fix: Header now displays actual selected feature, not stale branch info"
+      ],
+      "estimated_complexity": "small",
+      "depends_on": [
+        "024"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null,
+      "test_files": [
+        "tests/ralph-progress-header.bats"
+      ]
     }
   ],
   "notes": [
@@ -762,9 +794,13 @@
     "Feature 025 issue: Commit says tests pass, then Ralph's quality gate shows tests failed - extremely confusing UX",
     "Feature 026 is CRITICAL: Fix Feature 024 - make progress header truly static at top of terminal (NEW)",
     "Feature 026 issue: Current header implementation scrolls away with Claude output, defeating its purpose",
-    "Feature 027 is CRITICAL: Fix false success detection when Claude interrupted before real work (NEW)",
+    "Feature 027 is CRITICAL: Fix false success detection when Claude interrupted before real work (COMPLETE)",
     "Feature 027 issue: System detected old merge commit and reported success despite no actual work being done",
     "Feature 027 problem: Stopping Claude early causes Ralph to think everything succeeded when nothing was completed",
+    "Feature 028 is CRITICAL: Fix progress header to show correct selected feature, not branch name (NEW)",
+    "Feature 028 issue 1: Header shows feature from branch name (001) instead of actual selected feature (027)",
+    "Feature 028 issue 2: Header is printed too early, before Ralph determines which feature to actually work on",
+    "Feature 028 solution: Move header display to AFTER feature selection, pass selected feature explicitly",
     "Feature 001 adds auto-PR creation with GitHub CLI (reduced scope - 000a covers branch creation)",
     "Features 002-006 implement the remaining improvements from the analysis",
     "Feature 007 improves code quality of ralph.sh (COMPLETE)",
