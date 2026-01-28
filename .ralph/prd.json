@@ -628,20 +628,24 @@
       "type": "feature",
       "category": "infrastructure",
       "priority": "high",
-      "description": "Add static footer showing current task and progress (x/y features complete)",
+      "description": "Add persistent header showing current task and progress that remains visible while Claude is running",
       "steps": [
         "Add function to calculate PRD statistics: total features, completed (passes=true), in-progress, blocked",
-        "Create display_progress_footer() function in ralph.sh",
-        "Footer should show: 'Current Task: [feature description]' and 'Progress: x/y features complete'",
-        "Update footer display at start of each Ralph iteration",
-        "Add SHOW_PROGRESS_FOOTER configuration option (default: true)",
-        "Footer should persist during agent execution (not cleared by scrolling)",
-        "Include percentage complete in footer: 'Progress: x/y (z%) features complete'",
+        "Create display_progress_header() function in ralph.sh",
+        "Header should show: 'Current Task: [feature description]' and 'Progress: x/y features complete'",
+        "Use terminal control sequences to create persistent header at top of screen",
+        "Header must remain visible even while Claude is outputting text (use tput/ANSI codes)",
+        "Update header display at start of each Ralph iteration",
+        "Add SHOW_PROGRESS_HEADER configuration option (default: true)",
+        "Include percentage complete in header: 'Progress: x/y (z%) features complete'",
         "Add color coding: green for completed, yellow for in-progress, red for blocked",
-        "Show current feature ID and type in footer: 'Current: [id] - [type] - [description]'",
-        "Test: run Ralph and verify footer displays correctly",
-        "Test: verify footer updates when feature is completed",
-        "Document the progress footer feature in README"
+        "Show current feature ID and type in header: 'Current: [id] - [type] - [description]'",
+        "Ensure header stays at top during agent execution (use 'tput cup 0 0' to position cursor)",
+        "Consider using 'clear' at start then printing header, or use save/restore cursor position",
+        "Test: run Ralph and verify header displays at top of screen",
+        "Test: verify header remains visible while Claude is running",
+        "Test: verify header updates when feature is completed",
+        "Document the progress header feature in README"
       ],
       "estimated_complexity": "small",
       "depends_on": [
@@ -651,7 +655,34 @@
       "iterations_taken": 0,
       "blocked_reason": null,
       "test_files": [
-        "tests/ralph-progress-footer.bats"
+        "tests/ralph-progress-header.bats"
+      ]
+    },
+    {
+      "id": "025",
+      "type": "bug",
+      "category": "quality",
+      "priority": "critical",
+      "description": "Fix confusing output where Claude claims test results in commits before Ralph verifies them",
+      "steps": [
+        "TDD RED: Write test that detects when commit messages contain test result claims",
+        "TDD RED: Verify test fails with current behavior (Claude writing 'All X tests pass' in commits)",
+        "Update AGENT_PROMPT.md section 9 (Create Git Commit) to explicitly forbid test result claims",
+        "Add WARNING section: 'NEVER write test counts or status in commit messages'",
+        "Explain WHY: Ralph verifies tests AFTER commit, creating contradictory output if claimed early",
+        "Add examples of BAD commit messages: 'All 235 tests pass', 'Tests: 100 passed'",
+        "Add examples of GOOD commit messages: just describe what was implemented",
+        "Emphasize: Describe WHAT you built, not whether tests pass",
+        "TDD GREEN: Run test and verify it passes with updated prompt",
+        "Document the fix: commit messages should describe implementation, Ralph reports test results"
+      ],
+      "estimated_complexity": "small",
+      "depends_on": [],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null,
+      "test_files": [
+        "tests/ralph-commit-messages.bats"
       ]
     }
   ],
@@ -667,8 +698,10 @@
     "After 021: Ralph will enforce test creation, preventing the 'no tests' problem from recurring",
     "Feature 022 enforces TDD (red-green) workflow for bug fixes: write failing test first, then fix",
     "Feature 023 is HIGH priority bug: fix 'EOF: command not found' error in ralph.sh line 7",
-    "Feature 024 is HIGH priority: add static footer showing current task and x/y progress (NEW)",
-    "Feature 024 provides visibility into Ralph's current work and overall progress",
+    "Feature 024 is HIGH priority: add persistent header showing current task and x/y progress that stays visible",
+    "Feature 024 provides visibility into Ralph's current work and overall progress, even while Claude is running",
+    "Feature 025 is CRITICAL bug: Claude claims 'All X tests pass' in commits BEFORE Ralph verifies, creating contradictory output",
+    "Feature 025 issue: Commit says tests pass, then Ralph's quality gate shows tests failed - extremely confusing UX",
     "Feature 001 adds auto-PR creation with GitHub CLI (reduced scope - 000a covers branch creation)",
     "Features 002-006 implement the remaining improvements from the analysis",
     "Feature 007 improves code quality of ralph.sh",
