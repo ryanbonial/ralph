@@ -88,6 +88,11 @@ LOG_LEVEL="${LOG_LEVEL:-INFO}"
 # Example: LOG_FILE=".ralph/ralph.log"
 LOG_FILE="${LOG_FILE:-}"
 
+# Progress Header Configuration (Feature 024)
+# Show persistent header with current task and progress stats
+# Default: true (shows header at start of each iteration)
+SHOW_PROGRESS_HEADER="${SHOW_PROGRESS_HEADER:-true}"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -167,6 +172,145 @@ log_error() {
         echo -e "${RED}[ERROR]${NC} $1"
     fi
     write_to_log_file "ERROR" "$1"
+}
+
+# ==========================================
+# Progress Header Display (Feature 024)
+# ==========================================
+
+# Calculate PRD statistics: total, completed, blocked, remaining
+calculate_prd_stats() {
+    local prd_data="$1"
+
+    # Use Python to count features by status
+    python3 -c "
+import json
+import sys
+
+try:
+    prd = json.loads('''$prd_data''')
+    features = prd.get('features', [])
+
+    total = len(features)
+    completed = sum(1 for f in features if f.get('passes') == True)
+    blocked = sum(1 for f in features if f.get('blocked_reason') not in [None, ''])
+    remaining = total - completed
+
+    # Return as CSV: total,completed,blocked,remaining
+    print(f'{total},{completed},{blocked},{remaining}')
+except Exception as e:
+    # Fallback if parsing fails
+    print('0,0,0,0')
+    sys.exit(1)
+" 2>/dev/null || echo "0,0,0,0"
+}
+
+# Get current feature info: ID, type, description
+get_current_feature_info() {
+    local prd_data="$1"
+
+    # Use Python to find next incomplete feature
+    python3 -c "
+import json
+import sys
+
+try:
+    prd = json.loads('''$prd_data''')
+    features = prd.get('features', [])
+
+    # Find first incomplete feature with met dependencies
+    for feature in features:
+        if feature.get('passes') == True:
+            continue
+        if feature.get('blocked_reason') not in [None, '']:
+            continue
+
+        # Check dependencies
+        deps = feature.get('depends_on', [])
+        deps_met = True
+        for dep_id in deps:
+            dep_feature = next((f for f in features if f.get('id') == dep_id), None)
+            if dep_feature is None or dep_feature.get('passes') != True:
+                deps_met = False
+                break
+
+        if deps_met:
+            feature_id = feature.get('id', 'unknown')
+            feature_type = feature.get('type', 'feature')
+            description = feature.get('description', 'No description')
+            # Truncate description if too long
+            if len(description) > 70:
+                description = description[:67] + '...'
+            print(f'{feature_id}|{feature_type}|{description}')
+            sys.exit(0)
+
+    # No feature found
+    print('none|none|All features complete or blocked')
+except Exception as e:
+    print('error|error|Failed to parse PRD')
+    sys.exit(1)
+" 2>/dev/null || echo "error|error|Failed to parse PRD"
+}
+
+# Display progress header with current task and stats
+display_progress_header() {
+    # Only show if enabled and not in quiet mode
+    if [ "$SHOW_PROGRESS_HEADER" != "true" ]; then
+        return
+    fi
+    if [ "$LOG_LEVEL" = "ERROR" ]; then
+        return
+    fi
+
+    # Get PRD data
+    local prd_data
+    prd_data=$(get_prd_data)
+    if [ -z "$prd_data" ]; then
+        log_warning "Cannot display progress header: PRD data not available"
+        return
+    fi
+
+    # Calculate statistics
+    local stats
+    stats=$(calculate_prd_stats "$prd_data")
+    IFS=',' read -r total completed blocked remaining <<< "$stats"
+
+    # Get current feature info
+    local current_info
+    current_info=$(get_current_feature_info "$prd_data")
+    IFS='|' read -r feature_id feature_type description <<< "$current_info"
+
+    # Calculate percentage
+    local percentage=0
+    if [ "$total" -gt 0 ]; then
+        percentage=$(( completed * 100 / total ))
+    fi
+
+    # Display header with color coding
+    echo ""
+    echo -e "${BLUE}═══════════════════════════════════════════════════════════════════${NC}"
+
+    # Current feature line
+    if [ "$feature_id" = "none" ]; then
+        echo -e "${GREEN}🎯 Current: All features complete!${NC}"
+    elif [ "$feature_id" = "error" ]; then
+        echo -e "${RED}🎯 Current: Error reading PRD${NC}"
+    else
+        echo -e "${YELLOW}🎯 Current: [$feature_id] - $feature_type - $description${NC}"
+    fi
+
+    # Progress statistics line
+    local stats_line="📊 Progress: ${GREEN}$completed${NC}/$total (${GREEN}$percentage%${NC}) complete"
+    if [ "$blocked" -gt 0 ]; then
+        stats_line="$stats_line | ${RED}$blocked blocked${NC}"
+    fi
+    if [ "$remaining" -gt 0 ]; then
+        stats_line="$stats_line | ${YELLOW}$remaining remaining${NC}"
+    fi
+    echo -e "$stats_line"
+
+    echo -e "${BLUE}═══════════════════════════════════════════════════════════════════${NC}"
+    echo ""
 }
 
 # ==========================================
@@ -1680,6 +1824,9 @@ main() {
     fi
     echo "╚════════════════════════════════════════╝"
     echo ""
+
+    # Display progress header (Feature 024)
+    display_progress_header
 
     check_prerequisites
     run_ralph_loop
