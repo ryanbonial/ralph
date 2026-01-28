@@ -1356,3 +1356,61 @@ Notes for next iteration:
 - Next available high-priority features: 001 (auto-PR), 018 (spike mode)
 - Next available features: 001, 002, 005, 006, 016, 018
 ---
+
+--- 2026-01-28 15:30:00 ---
+Feature: [029] Persist failure context to progress.txt after rollback so next iteration can learn from mistakes
+Status: Completed
+
+Implementation:
+- Created log_failure_context() function in ralph.sh (lines 1600-1722)
+- Function captures feature info from PRD using get_prd_data and Python JSON parsing
+- Detects which quality gates failed by checking temp log files:
+  - /tmp/ralph_format_check.log for formatting errors
+  - /tmp/ralph_lint.log for linting errors  
+  - /tmp/ralph_typecheck.log and /tmp/ralph_tsc.log for type checking errors
+  - /tmp/ralph_test.log for test failures (uses extract_failing_tests for details)
+- Extracts actual error messages from temp files (tail -20/-30) for actionable context
+- Formats failure context as ROLLBACK entry with timestamp, feature info, failed gates, and error details
+- Appends to progress.txt AFTER rollback (so it survives git reset --hard)
+- Updated run_single_iteration() to call log_failure_context after rollback_last_commit (line 1779)
+- Updated run_continuous_loop() to call log_failure_context after rollback_last_commit (line 1860)
+- Updated AGENT_PROMPT.md "Get Your Bearings" section to instruct agents to check for ROLLBACK entries
+- Added guidance explaining what ROLLBACK entries contain and why they're important
+
+Testing:
+- Created tests/ralph-failure-learning.bats with 20 comprehensive tests
+- All 278 tests pass (added 20 new tests)
+- Tests verify: function exists, called after rollback, checks all temp log files, appends to progress.txt
+- Tests verify: ROLLBACK header format, feature info inclusion, error detail extraction
+- Tests verify: AGENT_PROMPT.md documentation of ROLLBACK entries
+- Bash syntax validation passed: bash -n ralph.sh
+
+Key Files Modified:
+- ralph.sh: Added log_failure_context() function, updated 2 rollback call sites
+- AGENT_PROMPT.md: Added ROLLBACK learning guidance to "Get Your Bearings" section  
+- tests/ralph-failure-learning.bats: New test file with 20 tests
+- .ralph/prd.json: Marked feature 029 as complete with iterations_taken=1
+
+Challenges:
+- Initial test failures due to grep -A 100 not capturing full 123-line function
+- Fixed by updating tests to use grep -A 150 to capture complete function
+
+Technical Solution:
+- log_failure_context() is called AFTER rollback, so the progress.txt update survives the git reset
+- Function dynamically detects which gates failed by checking for errors in temp log files
+- Captures specific error messages, not just generic "failed" status
+- Next iteration will read progress.txt and see exactly what went wrong
+- This breaks the failure loop where agents repeatedly attempt the same failing approach
+
+Benefits:
+- Agents now learn from previous failures instead of repeating mistakes
+- Specific error messages guide the fix (e.g., "ESLint error on line 42: unused variable")
+- Failure context persists across rollbacks, enabling incremental debugging
+- Addresses core problem: rollback was destroying all failure context
+
+Notes for next iteration:
+- Feature 029 is now complete
+- Next available features to work on: 001, 002, 005, 006, 016, 018
+- Feature 001 (auto-PR creation) is medium priority and ready to implement
+- The failure learning mechanism is now in place for continuous improvement
+---
