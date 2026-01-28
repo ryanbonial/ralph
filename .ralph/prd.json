@@ -622,6 +622,37 @@
       "test_files": [
         "tests/ralph-syntax.bats"
       ]
+    },
+    {
+      "id": "024",
+      "type": "feature",
+      "category": "infrastructure",
+      "priority": "high",
+      "description": "Add static footer showing current task and progress (x/y features complete)",
+      "steps": [
+        "Add function to calculate PRD statistics: total features, completed (passes=true), in-progress, blocked",
+        "Create display_progress_footer() function in ralph.sh",
+        "Footer should show: 'Current Task: [feature description]' and 'Progress: x/y features complete'",
+        "Update footer display at start of each Ralph iteration",
+        "Add SHOW_PROGRESS_FOOTER configuration option (default: true)",
+        "Footer should persist during agent execution (not cleared by scrolling)",
+        "Include percentage complete in footer: 'Progress: x/y (z%) features complete'",
+        "Add color coding: green for completed, yellow for in-progress, red for blocked",
+        "Show current feature ID and type in footer: 'Current: [id] - [type] - [description]'",
+        "Test: run Ralph and verify footer displays correctly",
+        "Test: verify footer updates when feature is completed",
+        "Document the progress footer feature in README"
+      ],
+      "estimated_complexity": "small",
+      "depends_on": [
+        "000"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null,
+      "test_files": [
+        "tests/ralph-progress-footer.bats"
+      ]
     }
   ],
   "notes": [
@@ -636,6 +667,8 @@
     "After 021: Ralph will enforce test creation, preventing the 'no tests' problem from recurring",
     "Feature 022 enforces TDD (red-green) workflow for bug fixes: write failing test first, then fix",
     "Feature 023 is HIGH priority bug: fix 'EOF: command not found' error in ralph.sh line 7",
+    "Feature 024 is HIGH priority: add static footer showing current task and x/y progress (NEW)",
+    "Feature 024 provides visibility into Ralph's current work and overall progress",
     "Feature 001 adds auto-PR creation with GitHub CLI (reduced scope - 000a covers branch creation)",
     "Features 002-006 implement the remaining improvements from the analysis",
     "Feature 007 improves code quality of ralph.sh",
