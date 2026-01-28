@@ -5,6 +5,7 @@ EXAMPLE RALPH ITERATION OUTPUT
 This file shows a complete real-world Ralph iteration from start to finish.
 
 What you'll see below:
+- Ralph displays startup banner and progress header (Feature 024)
 - Agent reads AGENT_PROMPT.md (the prompt shown at the start)
 - Agent orients itself by reading progress log, PRD, and git history
 - Agent selects Feature 000a: "Auto-create feature branches"
@@ -953,10 +954,20 @@ Ralph is now more user-friendly and can automatically create appropriate feature
 
 ✻ Worked for 3m 56s
 
+╔════════════════════════════════════════╗
+║   Ralph Wiggum Technique - Agent Loop  ║
+║        Human-in-the-Loop Mode          ║
+╚════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════
+🎯 Current: [001] - feature - Add auto-PR creation after feature completion
+📊 Progress: 16/23 (70%) complete | 0 blocked | 7 remaining
+═══════════════════════════════════════════════════════════════════
+
 [INFO] Starting Ralph Wiggum (human-in-the-loop mode - single iteration)
   🍌 "Go banana!" - Ralph Wiggum
 
-[INFO] Remaining features: 16
+[INFO] Remaining features: 7
 [SUCCESS] Commit detected: docs: add EXAMPLE_OUTPUT.txt as learning resource throughout README
 [INFO] Running code quality gates...
 
