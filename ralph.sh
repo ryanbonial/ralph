@@ -255,6 +255,12 @@ except Exception as e:
 # Display progress header with current task and stats
 # Uses terminal control sequences to keep header static at top of screen
 display_progress_header() {
+    # Accept feature parameters: feature_id, feature_type, description
+    # If not provided, will display header without feature info (just stats)
+    local feature_id="$1"
+    local feature_type="$2"
+    local description="$3"
+
     # Only show if enabled and not in quiet mode
     if [ "$SHOW_PROGRESS_HEADER" != "true" ]; then
         return
@@ -275,11 +281,6 @@ display_progress_header() {
     local stats
     stats=$(calculate_prd_stats "$prd_data")
     IFS=',' read -r total completed blocked remaining <<< "$stats"
-
-    # Get current feature info
-    local current_info
-    current_info=$(get_current_feature_info "$prd_data")
-    IFS='|' read -r feature_id feature_type description <<< "$current_info"
 
     # Calculate percentage
     local percentage=0
@@ -807,8 +808,12 @@ check_prerequisites() {
                 local next_feature=$(get_next_feature_from_prd)
 
                 if [ -n "$next_feature" ]; then
+                    local feature_id=$(echo "$next_feature" | python3 -c "import json,sys; print(json.load(sys.stdin).get('id', 'unknown'))")
+                    local feature_type=$(echo "$next_feature" | python3 -c "import json,sys; print(json.load(sys.stdin).get('type', 'feature'))")
                     local feature_desc=$(echo "$next_feature" | python3 -c "import json,sys; print(json.load(sys.stdin).get('description', ''))")
-                    log_info "Next feature: $feature_desc"
+                    local feature_desc_short=$(echo "$next_feature" | python3 -c "import json,sys; d=json.load(sys.stdin).get('description', ''); print(d[:67] + '...' if len(d) > 70 else d)")
+
+                    log_info "Next feature: [$feature_id] $feature_desc"
 
                     local branch_name=$(generate_branch_name "$next_feature")
                     log_info "Generated branch name: $branch_name"
@@ -818,6 +823,11 @@ check_prerequisites() {
                         suggest_feature_branch
                         exit 1
                     }
+
+                    # Display progress header after branch creation (Feature 028)
+                    echo ""
+                    display_progress_header "$feature_id" "$feature_type" "$feature_desc_short"
+                    HEADER_DISPLAYED=true
                 else
                     log_warning "Could not determine next feature from PRD"
                     log_info "Creating generic feature branch..."
@@ -826,6 +836,10 @@ check_prerequisites() {
                         suggest_feature_branch
                         exit 1
                     }
+                    # Display header without feature info
+                    echo ""
+                    display_progress_header "none" "none" "All features complete or blocked"
+                    HEADER_DISPLAYED=true
                 fi
             fi
 
@@ -885,6 +899,29 @@ check_prerequisites() {
         git init
         git add .
         git commit -m "Initial commit - Ralph Wiggum setup"
+    fi
+
+    # Select next feature and display progress header (Feature 028)
+    # This ensures header shows the actual feature that will be worked on
+    # Only do this if header wasn't already displayed in protected branch section
+    if [ -z "$HEADER_DISPLAYED" ]; then
+        local next_feature=$(get_next_feature_from_prd)
+        if [ -n "$next_feature" ]; then
+            local feature_id=$(echo "$next_feature" | python3 -c "import json,sys; print(json.load(sys.stdin).get('id', 'unknown'))")
+            local feature_type=$(echo "$next_feature" | python3 -c "import json,sys; print(json.load(sys.stdin).get('type', 'feature'))")
+            local feature_desc=$(echo "$next_feature" | python3 -c "import json,sys; d=json.load(sys.stdin).get('description', ''); print(d[:67] + '...' if len(d) > 70 else d)")
+
+            log_info "Next feature: [$feature_id] $feature_desc"
+            echo ""
+
+            # Display progress header with selected feature info
+            display_progress_header "$feature_id" "$feature_type" "$feature_desc"
+        else
+            log_info "No incomplete features found with met dependencies"
+            echo ""
+            # Display header without feature info (just stats)
+            display_progress_header "none" "none" "All features complete or blocked"
+        fi
     fi
 
     log_success "Prerequisites check complete"
@@ -1873,8 +1910,7 @@ main() {
     echo "╚════════════════════════════════════════╝"
     echo ""
 
-    # Display progress header (Feature 024)
-    display_progress_header
+    # Progress header will be displayed in check_prerequisites after feature selection (Feature 028)
 
     check_prerequisites
     run_ralph_loop

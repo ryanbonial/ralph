@@ -1289,3 +1289,70 @@ Notes for next iteration:
 - Next available high-priority features: 001 (auto-PR), 018 (spike mode)
 - Next available features: 001, 002, 005, 006, 016, 018
 ---
+
+--- 2026-01-28 (Feature 028) ---
+Feature: 028 - Fix progress header to show correct feature after selection, not from branch name
+Status: Completed
+Type: bug
+Complexity: small
+
+Implementation:
+- Followed TDD Red-Green workflow as required for bug fixes
+- RED Phase: Created 5 new tests in tests/ralph-progress-header.bats (tests 214-218)
+- RED Phase: Verified tests failed, proving the bug existed:
+  * get_current_feature_info doesn't sort by priority (unlike get_next_feature_from_prd)
+  * Header was called in main() BEFORE check_prerequisites (too early)
+  * Header didn't accept parameters, parsed PRD internally
+  * Header called get_current_feature_info instead of using selected feature
+- Root Cause: Header used different logic than actual feature selection, causing mismatches
+- Refactored display_progress_header() to accept parameters: feature_id, feature_type, description
+  * Added 3 parameter declarations at start of function
+  * Removed internal call to get_current_feature_info()
+  * Function now uses passed parameters instead of parsing PRD itself
+- Removed display_progress_header() call from main() (line 1877)
+  * Was being called too early, before feature selection
+  * Replaced with comment explaining new location
+- Added feature selection and header display in check_prerequisites():
+  * Protected branch section (lines 808-845): After auto-creating branch based on selected feature
+  * End of function (lines 891-913): For non-protected branches, selects feature then displays header
+  * Both locations call get_next_feature_from_prd() and pass results to display_progress_header()
+  * Used HEADER_DISPLAYED flag to avoid duplicate displays
+- Updated 6 old tests in ralph-progress-header.bats to match new behavior:
+  * Tests 192-194: Increased line offsets to account for new parameter declarations
+  * Test 196: Changed from checking get_current_feature_info call to checking parameter acceptance
+  * Tests 204-205: Changed from checking main() to checking check_prerequisites()
+- Fixed test syntax: Changed `&& exit 1 || exit 0` to `!` operator for bats compatibility
+- GREEN Phase: All 258 tests pass
+
+Testing:
+- ✅ TDD RED: 5 new tests failed before fix (proved bug)
+- ✅ TDD GREEN: All 258 tests pass after fix (proved fix works)
+- ✅ Bash syntax validation passed: bash -n ralph.sh
+- ✅ Test files as specified in PRD: tests/ralph-progress-header.bats updated
+- ✅ No quality gates to run (bash-only project, no package.json lint/format/typecheck)
+
+Key Files Modified:
+- ralph.sh: Refactored display_progress_header() (lines 257-332), removed call from main() (line 1877), added feature selection and header calls in check_prerequisites() (lines 808-913)
+- tests/ralph-progress-header.bats: Added 5 new tests (214-218), updated 6 old tests (192-196, 204-205) for new behavior
+- .ralph/prd.json: Marked feature 028 as complete with iterations_taken=1, test_files verified
+
+Challenges:
+- Initial test failures due to line offset changes after adding parameters
+- Test syntax with `&& exit 1 || exit 0` didn't work well with bats, fixed using `!` operator
+- Needed to update multiple old tests to match new behavior
+
+Technical Solution:
+- Header now gets feature info explicitly from get_next_feature_from_prd() results
+- Feature selection happens ONCE in check_prerequisites, results passed to header
+- This ensures header always shows the actual feature that will be worked on
+- No more mismatch between header display and actual work
+
+Notes for next iteration:
+- Feature 028 is now complete
+- Progress header now correctly shows the selected feature, not a guess from PRD
+- Header displays AFTER feature selection, ensuring accuracy
+- Both protected and non-protected branch flows handle header display correctly
+- Next available critical features: None remaining in critical priority
+- Next available high-priority features: 001 (auto-PR), 018 (spike mode)
+- Next available features: 001, 002, 005, 006, 016, 018
+---
