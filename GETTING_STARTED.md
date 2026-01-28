@@ -205,19 +205,49 @@ project/
 
 ```json
 {
+  "project": "Todo List Web Application",
+  "description": "A simple todo app with add, complete, delete, and filter features",
+  "schema_version": "2.0",
   "features": [
     {
       "id": "001",
+      "type": "feature",
+      "category": "functional",
+      "priority": "critical",
       "description": "User can add a new todo item",
-      "passes": false
+      "estimated_complexity": "small",
+      "depends_on": [],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null,
+      "test_files": ["tests/add-todo.test.js"]
     },
     {
       "id": "002",
+      "type": "feature",
+      "category": "functional",
+      "priority": "high",
       "description": "User can mark todo as complete",
-      "passes": false
+      "estimated_complexity": "small",
+      "depends_on": ["001"],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null,
+      "test_files": ["tests/complete-todo.test.js"]
     }
     // ... 13 more features
-  ]
+  ],
+  "field_definitions": {
+    "type": "Type of work - 'feature', 'bug', 'refactor', 'test', 'spike'",
+    "category": "Category - 'setup', 'infrastructure', 'functional', 'testing', 'quality', 'documentation'",
+    "priority": "Priority - 'critical', 'high', 'medium', 'low'",
+    "estimated_complexity": "Estimated size - 'small', 'medium', 'large'",
+    "depends_on": "Array of feature IDs that must be completed before this one",
+    "passes": "Boolean - true when fully implemented and verified",
+    "iterations_taken": "Number of Ralph iterations needed to complete",
+    "blocked_reason": "String - if blocked, explain why (null if not blocked)",
+    "test_files": "(Optional) Array of test files that should exist for this feature"
+  }
 }
 ```
 
@@ -351,6 +381,100 @@ git log -1
 # View all features
 cat .ralph/prd.json | jq '.features[] | {id, description, passes}'
 ```
+
+## 📚 Understanding PRD Schema v2.0
+
+Ralph uses an enhanced PRD (Product Requirements Document) schema with powerful features:
+
+### Feature Types
+
+Each feature has a `type` field that determines how it's handled:
+
+- **`feature`**: New functionality - MUST include tests before marking complete
+- **`bug`**: Fix broken behavior - MUST follow TDD red-green workflow (write failing test first, then fix)
+- **`refactor`**: Improve code quality without changing behavior - existing tests must pass
+- **`test`**: Add or improve tests - the tests are the implementation
+- **`spike`**: Research/exploration task - may require multiple iterations
+
+### Quality Gates
+
+Ralph enforces 5 quality gates before accepting commits:
+
+1. **Code Formatting**: Prettier/Black/gofmt must pass (auto-fixes if `AUTOFIX_PRETTIER=true`)
+2. **Linting**: ESLint/Pylint errors BLOCK completion (not optional)
+3. **Type Checking**: TypeScript/mypy errors BLOCK completion
+4. **Test Suite**: All tests must pass (BLOCKING)
+5. **Test Coverage**:
+   - `feature` type: MUST write new tests
+   - `bug` type: MUST follow TDD (write failing test, verify RED, fix, verify GREEN)
+   - `refactor` type: Existing tests must pass (no new tests required)
+   - `test` type: Tests are the work itself
+
+**Test Files Field:**
+
+Add optional `test_files` array to your features to specify required test files:
+
+```json
+{
+  "id": "005",
+  "type": "feature",
+  "description": "User can filter todos by status",
+  "test_files": ["tests/filter-todos.test.js"],
+  "passes": false
+}
+```
+
+Ralph's quality gate will verify these files exist before marking the feature complete.
+
+### Feature Dependencies
+
+Use `depends_on` to create dependency chains:
+
+```json
+[
+  {
+    "id": "001",
+    "description": "Set up database connection",
+    "depends_on": [],
+    "passes": true
+  },
+  {
+    "id": "002",
+    "description": "Create user table",
+    "depends_on": ["001"],
+    "passes": false
+  },
+  {
+    "id": "003",
+    "description": "Implement user registration",
+    "depends_on": ["002"],
+    "passes": false
+  }
+]
+```
+
+Ralph will only select features where all `depends_on` dependencies have `"passes": true`.
+
+### Failure Learning
+
+When quality gates fail, Ralph captures failure context in `progress.txt`:
+
+```
+--- ROLLBACK: 2025-01-28 15:30:00 ---
+Feature: [005] Add filter functionality
+QUALITY GATES FAILED:
+❌ Linting errors detected
+
+ERROR DETAILS:
+filter.js:42:10: error: unused variable 'foo'
+
+GUIDANCE FOR NEXT ITERATION:
+- Fix linting errors shown above
+- Run `npm run lint` before committing
+---
+```
+
+The next iteration reads this and learns from the mistakes instead of repeating them.
 
 ## ❓ FAQ
 

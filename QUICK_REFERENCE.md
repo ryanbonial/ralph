@@ -109,11 +109,21 @@ npm run lint
 
 ### 7. Update PRD
 
-Only if fully verified:
+Only if fully verified AND all quality gates pass:
 
 ```json
 "passes": false  →  "passes": true
+"iterations_taken": 0  →  "iterations_taken": 1
 ```
+
+**Quality Gates that MUST pass:**
+- ✅ Code formatting (prettier/black)
+- ✅ Linting (eslint/pylint) - BLOCKING
+- ✅ Type checking (tsc/mypy) - BLOCKING
+- ✅ Test suite - BLOCKING
+- ✅ Test coverage - BLOCKING for feature/bug types
+  - Features MUST have tests
+  - Bugs MUST follow TDD red-green workflow
 
 ### 8. Log Progress
 
@@ -284,6 +294,149 @@ git show HEAD
 # Run all checks
 npm run typecheck && npm test && npm run lint
 ```
+
+## ⚙️ Configuration Options
+
+### Core Options
+
+```bash
+# Run mode
+RUN_MODE=once              # Default: one iteration then stop
+RUN_MODE=continuous        # Run until complete or max iterations
+
+# Max iterations (continuous mode only)
+MAX_ITERATIONS=100         # Default: 100
+
+# AI agent mode
+AI_AGENT_MODE=claude       # Default: use Claude API
+AI_AGENT_MODE=manual       # Manual: interactive prompts
+```
+
+### Git Safety
+
+```bash
+# Protected branches (default: main,master)
+PROTECTED_BRANCHES="main,master"
+
+# Auto-create feature branches (default: true)
+AUTO_CREATE_BRANCH=true
+
+# Allow git push (default: false - safety first!)
+ALLOW_GIT_PUSH=false
+```
+
+### Quality Gates
+
+```bash
+# Auto-fix prettier formatting (default: true)
+AUTOFIX_PRETTIER=true
+
+# Rollback on failure (default: true)
+ROLLBACK_ON_FAILURE=true
+
+# Verify before complete (default: true)
+VERIFY_BEFORE_COMPLETE=true
+
+# Test output mode (default: failures)
+TEST_OUTPUT_MODE=failures  # Show only failing tests
+TEST_OUTPUT_MODE=summary   # Show only stats
+TEST_OUTPUT_MODE=full      # Show everything
+```
+
+### Logging and Display
+
+```bash
+# Log level (default: INFO)
+LOG_LEVEL=DEBUG            # Most verbose
+LOG_LEVEL=INFO             # Normal (default)
+LOG_LEVEL=WARN             # Warnings + errors only
+LOG_LEVEL=ERROR            # Errors only
+
+# Persistent logging
+LOG_FILE=".ralph/ralph.log"
+
+# Progress header (default: true)
+SHOW_PROGRESS_HEADER=true
+```
+
+### Advanced Options
+
+```bash
+# PRD storage mode (default: file)
+PRD_STORAGE=file           # Use local .ralph/prd.json
+PRD_STORAGE=sanity         # Use Sanity CMS (requires config)
+
+# Custom PRD file path
+PRD_FILE=".ralph/prd.json"
+
+# Custom progress file path
+PROGRESS_FILE=".ralph/progress.txt"
+
+# Sanity configuration (when PRD_STORAGE=sanity)
+SANITY_PROJECT_ID="your-project-id"
+SANITY_DATASET="production"
+SANITY_TOKEN="your-write-token"
+```
+
+### Command-Line Flags
+
+```bash
+# Help
+./ralph.sh --help
+
+# Verbose mode (LOG_LEVEL=DEBUG)
+./ralph.sh --verbose
+
+# Quiet mode (LOG_LEVEL=ERROR)
+./ralph.sh --quiet
+
+# Health check
+./ralph.sh --doctor
+
+# Custom branch name (auto-creation)
+./ralph.sh --branch-name my-custom-branch
+```
+
+## 📋 PRD Schema v2.0
+
+```json
+{
+  "project": "Project Name",
+  "description": "Project description",
+  "schema_version": "2.0",
+  "features": [
+    {
+      "id": "001",
+      "type": "feature",              // feature|bug|refactor|test|spike
+      "category": "functional",       // setup|infrastructure|functional|testing|quality|documentation
+      "priority": "critical",         // critical|high|medium|low
+      "description": "Feature description",
+      "estimated_complexity": "small", // small|medium|large
+      "depends_on": [],               // Array of feature IDs
+      "passes": false,                // true when complete
+      "iterations_taken": 0,          // Auto-tracked
+      "blocked_reason": null,         // Explanation if blocked
+      "test_files": [                 // Optional: required test files
+        "tests/my-feature.test.js"
+      ],
+      "acceptance_criteria": {        // Optional: structured testing
+        "unit_tests": ["tests/unit/foo.test.js"],
+        "e2e_tests": ["tests/e2e/bar.test.js"],
+        "manual_checks": ["Verify UI displays correctly"]
+      }
+    }
+  ]
+}
+```
+
+**Field Meanings:**
+- **type**: `feature` (new), `bug` (fix), `refactor` (improve), `test` (add tests), `spike` (research)
+- **category**: `setup`, `infrastructure`, `functional`, `testing`, `quality`, `documentation`
+- **priority**: `critical`, `high`, `medium`, `low`
+- **estimated_complexity**: `small` (<1hr), `medium` (1-3hrs), `large` (>3hrs)
+- **depends_on**: Feature IDs that must be complete first
+- **test_files**: Optional array of test files to verify exist
+- **acceptance_criteria**: Optional structured testing requirements
 
 ## 📱 One-Line Summary Per Step
 
