@@ -1241,6 +1241,52 @@ The parser automatically detects the test format and extracts relevant informati
 
 **Recommendation**: Use the default `failures` mode unless you need complete test output for debugging.
 
+### Progress Footer (Feature 024)
+
+Ralph displays a visual progress footer at the start of each iteration, showing you exactly what's being worked on and overall completion status.
+
+#### What It Shows
+
+The footer displays at the start of every Ralph iteration:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ Current Task: 024 - feature - Add static footer showing current...    │
+│ Progress: 18/25 (72%) complete | 1 blocked                            │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+**Information displayed:**
+- **Current Task**: ID, type, and description of the feature being worked on
+- **Progress**: Completed features / Total features (percentage)
+- **Blocked**: Number of features currently blocked (if any)
+
+#### Color Coding
+
+- 🔵 **Blue** - Current Task label
+- 🟢 **Green** - Progress label
+- 🔴 **Red** - Blocked count (when > 0)
+
+#### Configuration
+
+```bash
+# Enable progress footer (default)
+SHOW_PROGRESS_FOOTER=true ./ralph.sh
+
+# Disable progress footer
+SHOW_PROGRESS_FOOTER=false ./ralph.sh
+```
+
+#### Why This Helps
+
+1. **Visibility**: See at a glance what Ralph is working on
+2. **Progress Tracking**: Know how many features remain
+3. **Context**: Understand where you are in the PRD
+4. **Motivation**: Watch completion percentage climb
+5. **Blocked Awareness**: Immediately see if features are blocked
+
+The footer appears at the start of each iteration, providing consistent context throughout the Ralph workflow.
+
 ### Sanity CMS Integration
 
 Ralph supports storing your PRD (Product Requirements Document) in Sanity CMS instead of local JSON files. This enables team collaboration, visual editing, version history, and real-time sync across multiple Ralph instances.

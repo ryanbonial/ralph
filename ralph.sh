@@ -88,6 +88,11 @@ LOG_LEVEL="${LOG_LEVEL:-INFO}"
 # Example: LOG_FILE=".ralph/ralph.log"
 LOG_FILE="${LOG_FILE:-}"
 
+# Progress Footer Configuration (Feature 024)
+# Show progress footer at the start of each iteration (default: true)
+# Footer displays current task and overall progress: "Progress: x/y (z%) complete"
+SHOW_PROGRESS_FOOTER="${SHOW_PROGRESS_FOOTER:-true}"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -940,6 +945,105 @@ except:
     fi
 }
 
+# Calculate PRD statistics (Feature 024)
+# Returns: total,completed,blocked,in_progress
+# Also sets CURRENT_FEATURE_DATA global variable with current feature JSON
+calculate_prd_stats() {
+    local prd_data=$(get_prd_data)
+
+    if [ $? -ne 0 ]; then
+        echo "0,0,0,0"
+        return 1
+    fi
+
+    # Parse statistics using Python
+    local stats=$(echo "$prd_data" | python3 -c "
+import json, sys
+try:
+    prd = json.load(sys.stdin)
+    features = prd.get('features', [])
+
+    total = len(features)
+    completed = sum(1 for f in features if f.get('passes', False))
+    blocked = sum(1 for f in features if f.get('blocked_reason'))
+    in_progress = total - completed - blocked
+
+    print(f'{total},{completed},{blocked},{in_progress}')
+except Exception as e:
+    sys.stderr.write(f'Error: {e}\n')
+    print('0,0,0,0')
+" 2>/dev/null)
+
+    # Get current feature (next feature to work on)
+    CURRENT_FEATURE_DATA=$(get_next_feature_from_prd)
+
+    echo "$stats"
+}
+
+# Display progress footer showing current task and overall progress (Feature 024)
+display_progress_footer() {
+    # Skip if footer is disabled
+    if [ "$SHOW_PROGRESS_FOOTER" != "true" ]; then
+        return 0
+    fi
+
+    # Calculate statistics
+    local stats=$(calculate_prd_stats)
+    IFS=',' read -r total completed blocked in_progress <<< "$stats"
+
+    # Calculate percentage
+    local percent=0
+    if [ "$total" -gt 0 ]; then
+        percent=$((completed * 100 / total))
+    fi
+
+    # Prepare current task display
+    local current_task_display="None (all complete)"
+    if [ -n "$CURRENT_FEATURE_DATA" ] && [ "$CURRENT_FEATURE_DATA" != "null" ]; then
+        # Parse current feature data
+        local feature_id=$(echo "$CURRENT_FEATURE_DATA" | python3 -c "import json, sys; f=json.load(sys.stdin); print(f.get('id', 'unknown'))" 2>/dev/null)
+        local feature_type=$(echo "$CURRENT_FEATURE_DATA" | python3 -c "import json, sys; f=json.load(sys.stdin); print(f.get('type', 'unknown'))" 2>/dev/null)
+        local feature_desc=$(echo "$CURRENT_FEATURE_DATA" | python3 -c "import json, sys; f=json.load(sys.stdin); print(f.get('description', 'unknown'))" 2>/dev/null)
+
+        # Truncate description if too long
+        if [ ${#feature_desc} -gt 60 ]; then
+            feature_desc="${feature_desc:0:57}..."
+        fi
+
+        current_task_display="${feature_id} - ${feature_type} - ${feature_desc}"
+    fi
+
+    # Display footer with color coding
+    echo ""
+    echo "┌────────────────────────────────────────────────────────────────────────┐"
+    printf "│ ${BLUE}Current Task:${NC} %-60s │\n" "$current_task_display"
+
+    # Build progress text for display
+    local progress_display="$completed/$total ($percent%) complete"
+
+    # Calculate text length (without ANSI codes)
+    # "Progress: " = 10 chars, progress_display, optional " | X blocked"
+    local text_length=$((10 + ${#progress_display}))
+    if [ "$blocked" -gt 0 ]; then
+        local blocked_text="$blocked blocked"
+        text_length=$((text_length + 3 + ${#blocked_text}))  # 3 for " | "
+    fi
+
+    # Calculate padding (72 total - 2 for "│ " - 2 for " │" = 68 for content)
+    local content_width=68
+    local padding=$((content_width - text_length))
+
+    # Display progress line with colors
+    printf "│ ${GREEN}Progress:${NC} %s" "$progress_display"
+    if [ "$blocked" -gt 0 ]; then
+        printf " | ${RED}%d blocked${NC}" "$blocked"
+    fi
+    printf "%${padding}s │\n" ""
+
+    echo "└────────────────────────────────────────────────────────────────────────┘"
+    echo ""
+}
+
 # Parse test output to extract test statistics and failures
 # Arguments: $1 = output file path
 # Outputs: total,passed,failed,skipped
@@ -1438,6 +1542,9 @@ run_single_iteration() {
     echo "=========================================="
     echo ""
 
+    # Display progress footer (Feature 024)
+    display_progress_footer
+
     # Check if already complete
     if check_completion; then
         log_success "Project complete! Exiting."
@@ -1503,6 +1610,9 @@ run_continuous_loop() {
         log_info "Iteration $iteration of $MAX_ITERATIONS (Continuous Mode)"
         echo "=========================================="
         echo ""
+
+        # Display progress footer (Feature 024)
+        display_progress_footer
 
         # Check if already complete
         if check_completion; then
@@ -1649,6 +1759,7 @@ main() {
                 echo "  RUN_MODE              'once' (default) or 'continuous'"
                 echo "  LOG_LEVEL             'DEBUG', 'INFO' (default), 'WARN', 'ERROR'"
                 echo "  LOG_FILE              Optional log file path for persistent logging"
+                echo "  SHOW_PROGRESS_FOOTER  'true' (default) or 'false'"
                 echo "  AUTO_CREATE_BRANCH    'true' (default) or 'false'"
                 echo "  PROTECTED_BRANCHES    Comma-separated list (default: 'main,master')"
                 echo "  ALLOW_GIT_PUSH        'true' or 'false' (default: false)"

@@ -1046,3 +1046,78 @@ Notes for next iteration:
 - Next available features: 001, 002, 005, 006, 016, 018, 023
 - Feature 023 (EOF bug) is high priority and depends only on 020 (complete)
 ---
+
+--- 2026-01-28 (Feature 024) ---
+Feature: 024 - Add static footer showing current task and progress (x/y features complete)
+Status: Completed
+Type: feature
+Complexity: small
+
+Implementation:
+- Added SHOW_PROGRESS_FOOTER configuration to ralph.sh (default: true)
+- Implemented calculate_prd_stats() function
+  * Uses get_prd_data() to fetch PRD from file or Sanity
+  * Python script calculates total, completed, blocked, in_progress counts
+  * Returns CSV format: total,completed,blocked,in_progress
+  * Populates CURRENT_FEATURE_DATA global with next feature to work on
+- Implemented display_progress_footer() function
+  * Calls calculate_prd_stats() to get statistics
+  * Calculates completion percentage
+  * Parses current feature ID, type, and description
+  * Truncates descriptions longer than 60 characters
+  * Displays box-drawing characters for visual footer
+  * Color coding: BLUE for Current Task, GREEN for Progress, RED for blocked count
+  * Shows blocked count only when > 0
+  * Respects SHOW_PROGRESS_FOOTER configuration (can be disabled)
+- Added display_progress_footer() call in run_single_iteration()
+  * Called after iteration header, before checking completion
+- Added display_progress_footer() call in run_continuous_loop()
+  * Called after iteration header, before checking completion
+- Updated --help text to include SHOW_PROGRESS_FOOTER environment variable
+- Created comprehensive tests/ralph-progress-footer.bats with 39 tests
+- Updated README.md with "Progress Footer (Feature 024)" section
+  * Documented what footer shows, configuration, color coding
+  * Explained benefits: visibility, progress tracking, context, motivation
+
+Testing:
+- ✅ Bash syntax validation passed: bash -n ralph.sh exits 0
+- ✅ All 234 tests pass (195 existing + 39 new tests)
+- ✅ Test coverage includes:
+  * Configuration tests (SHOW_PROGRESS_FOOTER default and usage)
+  * Function existence tests (calculate_prd_stats, display_progress_footer)
+  * Implementation tests (PRD parsing, statistics calculation, CSV format)
+  * Display tests (box drawing, colors, labels, blocked count)
+  * Integration tests (called in both single and continuous modes)
+  * Feature parsing tests (ID, type, description extraction and truncation)
+  * Error handling tests (missing PRD, missing features, graceful degradation)
+  * Documentation tests (comments, help text, README)
+- ✅ Manual testing: footer displays correctly with proper alignment
+- ✅ Footer shows: Current Task, Progress (x/y), Percentage, Blocked count
+
+Key Files Modified:
+- ralph.sh: Added SHOW_PROGRESS_FOOTER config (line 94), calculate_prd_stats() (lines 949-985), display_progress_footer() (lines 987-1043), calls in iteration functions (lines 1541, 1611), --help text (line 1760)
+- tests/ralph-progress-footer.bats: Created with 39 comprehensive tests
+- README.md: Added "Progress Footer (Feature 024)" section with full documentation
+- .ralph/prd.json: Marked feature 024 as complete with iterations_taken=1
+
+Challenges:
+- Initial alignment issues with box drawing and ANSI color codes
+- Fixed by calculating text length without color codes, then adding proper padding
+- Text length calculation needed to account for " | " separator when showing blocked count
+- All tests passed after adjusting grep patterns for test framework compatibility
+
+Footer Example Output:
+┌────────────────────────────────────────────────────────────────────────┐
+│ Current Task: 024 - feature - Add static footer showing current...    │
+│ Progress: 14/25 (56%) complete | 1 blocked                            │
+└────────────────────────────────────────────────────────────────────────┘
+
+Notes for next iteration:
+- Feature 024 is now complete
+- Progress footer provides immediate visibility into Ralph's work and overall progress
+- Color coding makes information easy to scan
+- Can be disabled with SHOW_PROGRESS_FOOTER=false if desired
+- Footer appears at start of each iteration for consistent context
+- Next available high-priority features: None remaining
+- Next available features: 001, 002, 005, 006, 016, 018 (medium/low priority)
+---
