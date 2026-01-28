@@ -1606,6 +1606,11 @@ run_single_iteration() {
         exit 0
     fi
 
+    # Record iteration start time (epoch seconds) to detect commits made in THIS iteration
+    # This prevents false success detection when old commits exist but no new work was done
+    ITERATION_START_TIME=$(date +%s)
+    log_debug "Iteration start time: $ITERATION_START_TIME"
+
     # Run the agent based on configured mode
     execute_agent
 
@@ -1615,29 +1620,39 @@ run_single_iteration() {
         exit 0
     fi
 
-    # Verify a commit was made
+    # Verify a commit was made IN THIS ITERATION (not from previous work)
     LAST_COMMIT_MESSAGE=$(git log -1 --pretty=%B 2>/dev/null || echo "")
     if [ -n "$LAST_COMMIT_MESSAGE" ]; then
-        log_success "Commit detected: $LAST_COMMIT_MESSAGE"
+        # Get the timestamp of the last commit (epoch seconds)
+        COMMIT_TIMESTAMP=$(git log -1 --format=%ct 2>/dev/null || echo "0")
 
-        # Check for unauthorized git push
-        check_for_git_push
+        # Only report success if the commit was made AFTER this iteration started
+        # This fixes bug where old commits (e.g., merges) are detected as current work
+        if [ "$COMMIT_TIMESTAMP" -gt "$ITERATION_START_TIME" ]; then
+            log_success "Commit detected: $LAST_COMMIT_MESSAGE"
 
-        # Run verification tests if enabled
-        if [ "$VERIFY_BEFORE_COMPLETE" = "true" ]; then
-            if ! run_verification_tests; then
-                if [ "$ROLLBACK_ON_FAILURE" = "true" ]; then
-                    log_error "Verification failed - rolling back changes"
-                    rollback_last_commit
-                    echo ""
-                    log_warning "Feature may need to be reworked or marked as blocked"
+            # Check for unauthorized git push
+            check_for_git_push
+
+            # Run verification tests if enabled
+            if [ "$VERIFY_BEFORE_COMPLETE" = "true" ]; then
+                if ! run_verification_tests; then
+                    if [ "$ROLLBACK_ON_FAILURE" = "true" ]; then
+                        log_error "Verification failed - rolling back changes"
+                        rollback_last_commit
+                        echo ""
+                        log_warning "Feature may need to be reworked or marked as blocked"
+                    else
+                        log_warning "Verification failed but rollback is disabled"
+                        log_info "You may want to fix issues before continuing"
+                    fi
                 else
-                    log_warning "Verification failed but rollback is disabled"
-                    log_info "You may want to fix issues before continuing"
+                    log_success "Verification passed - changes accepted"
                 fi
-            else
-                log_success "Verification passed - changes accepted"
             fi
+        else
+            log_warning "No new commit in this iteration (last commit is from previous work)"
+            log_debug "Commit timestamp: $COMMIT_TIMESTAMP, Iteration start: $ITERATION_START_TIME"
         fi
     else
         log_warning "No git commit detected in this iteration"
@@ -1672,6 +1687,11 @@ run_continuous_loop() {
             exit 0
         fi
 
+        # Record iteration start time (epoch seconds) to detect commits made in THIS iteration
+        # This prevents false success detection when old commits exist but no new work was done
+        ITERATION_START_TIME=$(date +%s)
+        log_debug "Iteration start time: $ITERATION_START_TIME"
+
         # Run the agent
         execute_agent
 
@@ -1681,27 +1701,37 @@ run_continuous_loop() {
             exit 0
         fi
 
-        # Verify a commit was made
+        # Verify a commit was made IN THIS ITERATION (not from previous work)
         LAST_COMMIT_MESSAGE=$(git log -1 --pretty=%B 2>/dev/null || echo "")
         if [ -n "$LAST_COMMIT_MESSAGE" ]; then
-            log_success "Commit detected: $LAST_COMMIT_MESSAGE"
+            # Get the timestamp of the last commit (epoch seconds)
+            COMMIT_TIMESTAMP=$(git log -1 --format=%ct 2>/dev/null || echo "0")
 
-            # Check for unauthorized git push
-            check_for_git_push
+            # Only report success if the commit was made AFTER this iteration started
+            # This fixes bug where old commits (e.g., merges) are detected as current work
+            if [ "$COMMIT_TIMESTAMP" -gt "$ITERATION_START_TIME" ]; then
+                log_success "Commit detected: $LAST_COMMIT_MESSAGE"
 
-            # Run verification tests if enabled
-            if [ "$VERIFY_BEFORE_COMPLETE" = "true" ]; then
-                if ! run_verification_tests; then
-                    if [ "$ROLLBACK_ON_FAILURE" = "true" ]; then
-                        log_error "Verification failed - rolling back changes"
-                        rollback_last_commit
-                        log_warning "Continuing to next iteration (feature may be blocked)"
+                # Check for unauthorized git push
+                check_for_git_push
+
+                # Run verification tests if enabled
+                if [ "$VERIFY_BEFORE_COMPLETE" = "true" ]; then
+                    if ! run_verification_tests; then
+                        if [ "$ROLLBACK_ON_FAILURE" = "true" ]; then
+                            log_error "Verification failed - rolling back changes"
+                            rollback_last_commit
+                            log_warning "Continuing to next iteration (feature may be blocked)"
+                        else
+                            log_warning "Verification failed but rollback is disabled"
+                        fi
                     else
-                        log_warning "Verification failed but rollback is disabled"
+                        log_success "Verification passed - changes accepted"
                     fi
-                else
-                    log_success "Verification passed - changes accepted"
                 fi
+            else
+                log_warning "No new commit in this iteration (last commit is from previous work)"
+                log_debug "Commit timestamp: $COMMIT_TIMESTAMP, Iteration start: $ITERATION_START_TIME"
             fi
         else
             log_warning "No git commit detected in this iteration"
