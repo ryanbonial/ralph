@@ -684,6 +684,62 @@
       "test_files": [
         "tests/ralph-commit-messages.bats"
       ]
+    },
+    {
+      "id": "026",
+      "type": "bug",
+      "category": "infrastructure",
+      "priority": "critical",
+      "description": "Fix Feature 024: Progress header scrolls away instead of remaining static at top of terminal",
+      "steps": [
+        "TDD RED: Write test that verifies header behavior (simulate output and check if header remains visible)",
+        "TDD RED: Run test and confirm it fails (demonstrates current header scrolls away)",
+        "Investigate current display_progress_header() implementation in ralph.sh",
+        "Research terminal control sequences for truly static headers (e.g., tmux/screen-style status bar, or tput smcup/rmcup)",
+        "Consider alternatives: 1) Use terminal alternate screen buffer, 2) Update header by returning to line 1 periodically, 3) Use ANSI scroll region",
+        "Implement solution that keeps header at top even when Claude outputs many lines",
+        "Test: Run Ralph with verbose Claude output and verify header stays at top",
+        "TDD GREEN: Run test and verify it passes (header remains visible)",
+        "Document implementation approach and any terminal compatibility notes"
+      ],
+      "estimated_complexity": "medium",
+      "depends_on": [
+        "024"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null,
+      "test_files": [
+        "tests/ralph-progress-header.bats"
+      ]
+    },
+    {
+      "id": "027",
+      "type": "bug",
+      "category": "infrastructure",
+      "priority": "critical",
+      "description": "Fix false success detection when Claude is interrupted before completing any real work",
+      "steps": [
+        "TDD RED: Write test that simulates Claude interruption (e.g., empty/minimal output) and verifies ralph doesn't claim success",
+        "TDD RED: Run test and confirm it fails (demonstrates current false positive detection)",
+        "Investigate commit detection logic in ralph.sh - understand how it determines if work was done",
+        "Current issue: System detects merge commits from previous iterations and reports them as current work",
+        "Add logic to verify that detected commit was created in CURRENT iteration (check commit timestamp vs iteration start time)",
+        "Add logic to verify Claude actually completed meaningful work (not just read files and got interrupted)",
+        "Consider checking: 1) Did Claude modify files? 2) Was progress.txt updated? 3) Was PRD updated?",
+        "Improve commit detection to only count commits made AFTER Ralph started the agent",
+        "Add sanity check: If agent was interrupted (partial output), don't claim success",
+        "TDD GREEN: Run test and verify it passes (no false success on interruption)",
+        "Test: Start Ralph, interrupt Claude immediately (Ctrl+C), verify Ralph doesn't report success",
+        "Document the improved detection logic and what constitutes 'real work'"
+      ],
+      "estimated_complexity": "medium",
+      "depends_on": [
+        "000"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null
     }
   ],
   "notes": [
@@ -692,27 +748,31 @@
     "Feature 000 implements git safety checks (COMPLETE)",
     "Feature 010 ensures code quality gates (lint/prettier/typescript) are enforced (COMPLETE)",
     "Feature 017 prevents agents from continuing to next feature (COMPLETE)",
-    "Feature 020 is CRITICAL: implement basic automated tests that actually run (NEW)",
+    "Feature 020 is CRITICAL: implement basic automated tests that actually run (COMPLETE)",
     "Feature 021 is CRITICAL: fix Ralph's methodology to REQUIRE test creation for features (COMPLETE)",
     "Feature 021 addresses the root cause: Ralph built without tests because tests weren't required",
     "After 021: Ralph will enforce test creation, preventing the 'no tests' problem from recurring",
-    "Feature 022 enforces TDD (red-green) workflow for bug fixes: write failing test first, then fix",
-    "Feature 023 is HIGH priority bug: fix 'EOF: command not found' error in ralph.sh line 7",
-    "Feature 024 is HIGH priority: add persistent header showing current task and x/y progress that stays visible",
-    "Feature 024 provides visibility into Ralph's current work and overall progress, even while Claude is running",
-    "Feature 025 is CRITICAL bug: Claude claims 'All X tests pass' in commits BEFORE Ralph verifies, creating contradictory output",
+    "Feature 022 enforces TDD (red-green) workflow for bug fixes: write failing test first, then fix (COMPLETE)",
+    "Feature 023 is HIGH priority bug: fix 'EOF: command not found' error in ralph.sh line 7 (BLOCKED - cannot reproduce)",
+    "Feature 024 was marked complete but DOES NOT WORK - header scrolls away instead of staying static",
+    "Feature 025 is CRITICAL bug: Claude claims 'All X tests pass' in commits BEFORE Ralph verifies, creating contradictory output (COMPLETE)",
     "Feature 025 issue: Commit says tests pass, then Ralph's quality gate shows tests failed - extremely confusing UX",
+    "Feature 026 is CRITICAL: Fix Feature 024 - make progress header truly static at top of terminal (NEW)",
+    "Feature 026 issue: Current header implementation scrolls away with Claude output, defeating its purpose",
+    "Feature 027 is CRITICAL: Fix false success detection when Claude interrupted before real work (NEW)",
+    "Feature 027 issue: System detected old merge commit and reported success despite no actual work being done",
+    "Feature 027 problem: Stopping Claude early causes Ralph to think everything succeeded when nothing was completed",
     "Feature 001 adds auto-PR creation with GitHub CLI (reduced scope - 000a covers branch creation)",
     "Features 002-006 implement the remaining improvements from the analysis",
-    "Feature 007 improves code quality of ralph.sh",
+    "Feature 007 improves code quality of ralph.sh (COMPLETE)",
     "Feature 008 adds proper testing infrastructure (Feature 020 is the foundational prerequisite)",
     "Feature 009 documents all the new features",
-    "Feature 011 optimizes token usage by showing only failing tests",
-    "Feature 012 adds sandboxed execution for enhanced security",
-    "Features 013-014 add Sanity CMS as source-of-truth for PRD storage",
+    "Feature 011 optimizes token usage by showing only failing tests (COMPLETE)",
+    "Feature 012 adds sandboxed execution for enhanced security (COMPLETE)",
+    "Features 013-014 add Sanity CMS as source-of-truth for PRD storage (COMPLETE)",
     "Feature 016 adds optional Sanity Studio UI for team collaboration (low priority)",
     "Feature 018 adds spike/exploration mode for multi-iteration research tasks",
-    "Feature 019 bridges Cursor Planning Mode with Ralph execution",
+    "Feature 019 bridges Cursor Planning Mode with Ralph execution (COMPLETE)",
     "Sanity integration uses simple source-of-truth model (no sync complexity)",
     "Start with features that have no dependencies",
     "Use human-in-the-loop mode for complex features",
