@@ -35,6 +35,14 @@ cat .ralph/prd.json
 
 **Critical**: Understand what was recently worked on before starting new work.
 
+**Important - Learning from Failures**: Check for ROLLBACK entries in progress.txt. These contain critical learning context from previous iterations where quality gates failed and changes were reverted. ROLLBACK entries include:
+- Which feature was attempted
+- Which quality gates failed (linting, tests, type checking, formatting)
+- Specific error messages from the failures
+- Guidance for next attempt
+
+If you see a ROLLBACK entry for the feature you're about to work on, READ IT CAREFULLY. It shows exactly what went wrong last time so you can avoid repeating the same mistakes.
+
 ### 2. Verify Existing Functionality
 
 Before implementing anything new, verify core functionality still works:

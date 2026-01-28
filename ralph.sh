@@ -1595,6 +1595,132 @@ rollback_last_commit() {
     fi
 }
 
+# Log failure context to progress.txt after rollback (Feature 029)
+# This preserves learning context so next iteration knows what failed
+log_failure_context() {
+    local rolled_back_commit="$1"
+
+    log_info "Capturing failure context for next iteration..."
+
+    # Get current feature info
+    local prd_data=$(get_prd_data)
+    local feature_info=$(echo "$prd_data" | python3 -c "
+import json
+import sys
+
+try:
+    prd = json.load(sys.stdin)
+    features = prd.get('features', [])
+
+    # Find next incomplete feature with met dependencies
+    for feature in features:
+        if feature.get('passes', False):
+            continue
+        if feature.get('blocked_reason'):
+            continue
+
+        depends_on = feature.get('depends_on', [])
+        deps_met = True
+        for dep_id in depends_on:
+            dep_feature = next((f for f in features if f.get('id') == dep_id), None)
+            if not dep_feature or not dep_feature.get('passes', False):
+                deps_met = False
+                break
+
+        if deps_met:
+            print(json.dumps({
+                'id': feature.get('id', 'unknown'),
+                'type': feature.get('type', 'feature'),
+                'description': feature.get('description', 'Unknown feature')
+            }))
+            break
+except:
+    pass
+" 2>/dev/null)
+
+    local feature_id="unknown"
+    local feature_type="unknown"
+    local feature_desc="Unknown feature"
+
+    if [ -n "$feature_info" ]; then
+        feature_id=$(echo "$feature_info" | python3 -c "import json,sys; print(json.load(sys.stdin).get('id', 'unknown'))")
+        feature_type=$(echo "$feature_info" | python3 -c "import json,sys; print(json.load(sys.stdin).get('type', 'unknown'))")
+        feature_desc=$(echo "$feature_info" | python3 -c "import json,sys; print(json.load(sys.stdin).get('description', 'Unknown'))")
+    fi
+
+    # Determine which quality gates failed
+    local failed_gates=""
+    local error_details=""
+
+    # Check formatting
+    if [ -f "/tmp/ralph_format_check.log" ]; then
+        if grep -q "error" /tmp/ralph_format_check.log || grep -q "FAIL" /tmp/ralph_format_check.log; then
+            failed_gates="${failed_gates}\n  - Formatting"
+            error_details="${error_details}\n\nFormatting Errors:\n"
+            error_details="${error_details}$(tail -20 /tmp/ralph_format_check.log)"
+        fi
+    fi
+
+    # Check linting
+    if [ -f "/tmp/ralph_lint.log" ]; then
+        if grep -qE "error|Error|ERROR" /tmp/ralph_lint.log; then
+            failed_gates="${failed_gates}\n  - Linting"
+            error_details="${error_details}\n\nLinting Errors:\n"
+            error_details="${error_details}$(tail -30 /tmp/ralph_lint.log)"
+        fi
+    fi
+
+    # Check type checking
+    if [ -f "/tmp/ralph_typecheck.log" ]; then
+        if grep -qE "error|Error|ERROR" /tmp/ralph_typecheck.log; then
+            failed_gates="${failed_gates}\n  - Type Checking"
+            error_details="${error_details}\n\nType Checking Errors:\n"
+            error_details="${error_details}$(tail -30 /tmp/ralph_typecheck.log)"
+        fi
+    fi
+
+    if [ -f "/tmp/ralph_tsc.log" ]; then
+        if grep -qE "error|Error|ERROR" /tmp/ralph_tsc.log; then
+            failed_gates="${failed_gates}\n  - Type Checking (tsc)"
+            error_details="${error_details}\n\nTypeScript Errors:\n"
+            error_details="${error_details}$(tail -30 /tmp/ralph_tsc.log)"
+        fi
+    fi
+
+    # Check tests
+    if [ -f "/tmp/ralph_test.log" ]; then
+        # Use extract_failing_tests to get specific failures
+        local test_failures=$(extract_failing_tests "/tmp/ralph_test.log" 2>/dev/null || echo "")
+        if [ -n "$test_failures" ]; then
+            failed_gates="${failed_gates}\n  - Tests"
+            error_details="${error_details}\n\nTest Failures:\n"
+            error_details="${error_details}${test_failures}"
+        fi
+    fi
+
+    # If no specific gates identified, add generic message
+    if [ -z "$failed_gates" ]; then
+        failed_gates="\n  - Unknown (quality gates failed but details not captured)"
+    fi
+
+    # Append to progress.txt (AFTER rollback, so it survives)
+    {
+        echo ""
+        echo "--- ROLLBACK: $(date '+%Y-%m-%d %H:%M:%S') ---"
+        echo "Feature: [$feature_id] ($feature_type) $feature_desc"
+        echo "Rolled Back Commit: $rolled_back_commit"
+        echo "Reason: Quality gates failed"
+        echo -e "Failed Gates:${failed_gates}"
+        echo -e "${error_details}"
+        echo ""
+        echo "Next Iteration: Review these errors before re-attempting this feature."
+        echo "Consider: 1) Different approach, 2) Mark as blocked if impossible, 3) Fix specific errors listed above"
+        echo "---"
+    } >> "$PROGRESS_FILE"
+
+    log_success "Failure context saved to $PROGRESS_FILE"
+}
+
 # Check for unauthorized git push operations
 check_for_git_push() {
     if [ "$ALLOW_GIT_PUSH" != "true" ]; then
@@ -1677,6 +1803,7 @@ run_single_iteration() {
                     if [ "$ROLLBACK_ON_FAILURE" = "true" ]; then
                         log_error "Verification failed - rolling back changes"
                         rollback_last_commit
+                        log_failure_context "$LAST_COMMIT_MESSAGE"
                         echo ""
                         log_warning "Feature may need to be reworked or marked as blocked"
                     else
@@ -1758,6 +1885,7 @@ run_continuous_loop() {
                         if [ "$ROLLBACK_ON_FAILURE" = "true" ]; then
                             log_error "Verification failed - rolling back changes"
                             rollback_last_commit
+                            log_failure_context "$LAST_COMMIT_MESSAGE"
                             log_warning "Continuing to next iteration (feature may be blocked)"
                         else
                             log_warning "Verification failed but rollback is disabled"
