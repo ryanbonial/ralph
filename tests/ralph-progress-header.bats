@@ -83,11 +83,11 @@
 }
 
 @test "display_progress_header shows current feature with emoji" {
-    grep -A50 "display_progress_header()" ralph.sh | grep -q "🎯 Current:"
+    grep -A70 "display_progress_header()" ralph.sh | grep -q "🎯 Current:"
 }
 
 @test "display_progress_header shows progress stats with emoji" {
-    grep -A55 "display_progress_header()" ralph.sh | grep -q "📊 Progress:"
+    grep -A70 "display_progress_header()" ralph.sh | grep -q "📊 Progress:"
 }
 
 @test "display_progress_header uses color coding for completed" {
@@ -103,7 +103,7 @@
 }
 
 @test "display_progress_header shows separator lines" {
-    grep -A48 "display_progress_header()" ralph.sh | grep -q "═══════════════════"
+    grep -A70 "display_progress_header()" ralph.sh | grep -q "═══════════════════"
 }
 
 @test "main function calls display_progress_header" {
@@ -116,14 +116,43 @@
 }
 
 @test "display_progress_header handles 'none' when all complete" {
-    grep -A52 "display_progress_header()" ralph.sh | grep -q 'if \[ "$feature_id" = "none" \]'
+    grep -A70 "display_progress_header()" ralph.sh | grep -q 'if \[ "$feature_id" = "none" \]'
 }
 
 @test "display_progress_header handles 'error' case" {
-    grep -A54 "display_progress_header()" ralph.sh | grep -q 'if \[ "$feature_id" = "error" \]'
+    grep -A70 "display_progress_header()" ralph.sh | grep -q 'if \[ "$feature_id" = "error" \]'
 }
 
 @test "Feature 024 configuration is documented in help text" {
     # SHOW_PROGRESS_HEADER should be mentioned in documentation or comments
     grep -q "Progress Header" ralph.sh
+}
+
+# ==========================================
+# Tests for Feature 026: Static header fix
+# ==========================================
+
+@test "display_progress_header uses tput to save cursor position" {
+    # Header should save cursor position before displaying
+    grep -A80 "display_progress_header()" ralph.sh | grep -q "tput sc"
+}
+
+@test "display_progress_header uses tput to restore cursor position" {
+    # Header should restore cursor position after displaying
+    grep -A80 "display_progress_header()" ralph.sh | grep -q "tput rc"
+}
+
+@test "display_progress_header uses tput cup to position at top" {
+    # Header should position cursor at top of screen (line 0)
+    grep -A80 "display_progress_header()" ralph.sh | grep -q "tput cup 0 0"
+}
+
+@test "display_progress_header clears the header area before redisplay" {
+    # Header should clear previous header lines to avoid artifacts
+    grep -A80 "display_progress_header()" ralph.sh | grep -q "tput el"
+}
+
+@test "header implementation includes comment about static display" {
+    # Code should have a comment explaining the static header technique
+    grep -A80 "display_progress_header()" ralph.sh | grep -iq "static\|persist\|remain"
 }
