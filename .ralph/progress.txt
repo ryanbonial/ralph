@@ -1095,3 +1095,79 @@ Notes for next iteration:
 - Next available critical features: 024 (progress header - high priority)
 - Next available features: 001, 002, 005, 006, 016, 018, 024
 ---
+
+--- 2026-01-28 (Feature 024) ---
+Feature: 024 - Add persistent header showing current task and progress
+Status: Completed
+Type: feature
+Complexity: small
+
+Implementation:
+- Added SHOW_PROGRESS_HEADER configuration (default: true) to ralph.sh line 93-95
+- Created calculate_prd_stats() function (lines 176-207) to count total, completed, blocked, remaining features
+  * Uses Python to parse PRD JSON and extract statistics
+  * Returns CSV format: total,completed,blocked,remaining
+  * Graceful fallback on errors
+- Created get_current_feature_info() function (lines 209-249) to find next incomplete feature
+  * Uses Python to find first feature with passes=false and met dependencies
+  * Checks blocked_reason field
+  * Returns feature_id|feature_type|description (truncates long descriptions at 70 chars)
+  * Handles "none" (all complete) and "error" cases
+- Created display_progress_header() function (lines 251-311) to render the progress header
+  * Respects SHOW_PROGRESS_HEADER config and LOG_LEVEL (skips if ERROR)
+  * Calls get_prd_data() to fetch PRD
+  * Calls calculate_prd_stats() and get_current_feature_info()
+  * Calculates completion percentage
+  * Displays header with ANSI color codes and emojis (🎯, 📊)
+  * Format: separator line → current feature → progress stats → separator line
+  * Color coding: GREEN (completed), YELLOW (current/remaining), RED (blocked)
+- Integrated display_progress_header() into main() function at line 1829
+  * Called after banner display, before check_prerequisites()
+  * Provides early context about current work and overall progress
+- Created comprehensive test suite: tests/ralph-progress-header.bats (30 tests)
+
+Testing:
+- ✅ All 236 tests pass (206 existing + 30 new tests for feature 024)
+- ✅ Bash syntax validation passed: bash -n ralph.sh
+- ✅ ralph.sh executes without errors: ./ralph.sh --help
+- ✅ Test coverage includes:
+  * Configuration tests (SHOW_PROGRESS_HEADER default and usage)
+  * Function existence tests (all 3 new functions present)
+  * calculate_prd_stats tests (Python parsing, counting, CSV format)
+  * get_current_feature_info tests (finding features, checking deps, truncation)
+  * display_progress_header tests (config respect, color coding, emojis, error handling)
+  * Integration tests (main() calls display_progress_header, correct order)
+
+Key Files Modified:
+- ralph.sh: Added SHOW_PROGRESS_HEADER config (line 93-95), added 3 functions (lines 176-311), integrated into main() (line 1829)
+- tests/ralph-progress-header.bats: Created comprehensive test suite (30 tests)
+- .ralph/prd.json: Marked feature 024 as complete with iterations_taken=1
+
+Challenges:
+- Initial test failure: grep -A20 didn't capture far enough into main() function
+- Fixed by using awk '/^main\(\)/,/^}/' to extract entire function
+- All tests pass after fix
+
+Header Format:
+═══════════════════════════════════════════════════════════════════
+🎯 Current: [024] - feature - Add persistent progress header
+📊 Progress: 15/23 (65%) complete | 1 blocked | 7 remaining
+═══════════════════════════════════════════════════════════════════
+
+Benefits:
+- Users can see at a glance what Ralph is working on
+- Progress stats show overall completion percentage
+- Color coding provides visual feedback (green=done, yellow=current, red=blocked)
+- Header displays before any work starts, providing context
+- Helps users understand Ralph's current focus and remaining work
+
+Notes for next iteration:
+- Feature 024 is now complete
+- Progress header provides visibility into Ralph's work
+- Header respects LOG_LEVEL and SHOW_PROGRESS_HEADER configuration
+- Works with both file and Sanity PRD storage modes
+- Next available high-priority features: None remaining in high priority
+- Next available medium-priority features: 001, 002, 018
+- Next available low-priority features: 005, 006, 016
+- Feature 023 remains blocked (bug doesn't exist)
+---
