@@ -828,13 +828,11 @@
     },
     {
       "id": "030",
-      "type": "bug",
+      "type": "refactor",
       "category": "documentation",
       "priority": "critical",
       "description": "Documentation MD files are severely out of date with current Ralph implementation",
       "steps": [
-        "TDD RED: Create test to verify documentation examples match actual ralph.sh behavior",
-        "TDD RED: Run test to confirm documentation drift (should fail)",
         "Audit all MD files: README.md, GETTING_STARTED.md, QUICK_REFERENCE.md, AGENT_PROMPT.md, INITIALIZER_PROMPT.md, TROUBLESHOOTING.md, CONTINUOUS_MODE_IMPROVEMENTS.md, PLANNING_TO_PRD.md, INDEX.md, SUMMARY.md, The Ralph Wiggum Technique.md",
         "Compare documented features vs implemented features in ralph.sh",
         "Identify missing features in docs: progress header, failure learning, test enforcement, commit message rules, Sanity integration, Docker mode, etc.",
@@ -853,15 +851,13 @@
         "Verify AGENT_PROMPT.md matches actual ralph.sh verification gates",
         "Verify INITIALIZER_PROMPT.md generates PRDs matching current schema",
         "Add examples throughout docs showing real features from this PRD (features 000-029)",
-        "TDD GREEN: Run documentation tests and verify they pass",
         "Create documentation maintenance guide: how to keep docs in sync with code changes"
       ],
       "estimated_complexity": "large",
       "depends_on": [],
       "passes": false,
       "iterations_taken": 0,
-      "blocked_reason": null,
-      "test_files": []
+      "blocked_reason": null
     }
   ],
   "notes": [
@@ -892,7 +888,7 @@
     "Feature 029 problem: When rollback occurs, ALL context about the failure is destroyed (was in the rolled-back commit)",
     "Feature 029 issue: Next iteration has no knowledge of what failed, repeating same mistakes indefinitely",
     "Feature 029 solution: Capture failure details (which gates failed, error messages) AFTER rollback, append to progress.txt",
-    "Feature 030 is CRITICAL bug: Documentation MD files severely out of date with Ralph implementation (NEW)",
+    "Feature 030 is CRITICAL chore: Documentation MD files severely out of date with Ralph implementation (NEW)",
     "Feature 030 problem: README, GETTING_STARTED, QUICK_REFERENCE, and other docs missing many implemented features",
     "Feature 030 issue: Users cannot learn about progress header, failure learning, test enforcement, Sanity integration, Docker mode, etc.",
     "Feature 030 solution: Comprehensive audit and update of all documentation files to match current ralph.sh capabilities",
