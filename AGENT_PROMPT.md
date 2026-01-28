@@ -316,11 +316,24 @@ git add -A
 git commit -m "feat: [clear description of the feature completed]"
 ```
 
-Good commit messages:
+**CRITICAL WARNING - NEVER Claim Test Results in Commit Messages:**
 
-- `feat: add user authentication with JWT tokens`
-- `feat: implement real-time chat message display`
-- `fix: resolve broken navigation after refactor`
+**DO NOT** write test counts or test status in your commit messages. Examples of **BAD** commit messages:
+
+- ❌ `feat: add authentication - All 235 tests pass`
+- ❌ `fix: resolve navigation bug - Tests: 100 passed, 0 failed`
+- ❌ `feat: implement chat - all tests passing`
+
+**Why this is forbidden:** Ralph verifies tests **AFTER** you create the commit. If you claim "All X tests pass" in your commit message, but then Ralph's quality gates find test failures, the output becomes contradictory and confusing. Your commit says tests pass, but Ralph's verification shows they failed.
+
+**What to write instead:** Describe **WHAT you implemented**, not whether tests pass. Focus on the feature or fix, not test results. Ralph will report test status separately after the commit.
+
+**GOOD** commit messages (describe implementation only):
+
+- ✅ `feat: add user authentication with JWT tokens`
+- ✅ `feat: implement real-time chat message display`
+- ✅ `fix: resolve broken navigation after refactor`
+- ✅ `refactor: extract validation logic into separate functions`
 
 **IMPORTANT - Git Safety Rules:**
 
