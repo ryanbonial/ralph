@@ -59,23 +59,24 @@
 }
 
 @test "display_progress_header respects SHOW_PROGRESS_HEADER config" {
-    grep -A5 "display_progress_header()" ralph.sh | grep -q 'if \[ "$SHOW_PROGRESS_HEADER" != "true" \]'
+    grep -A12 "display_progress_header()" ralph.sh | grep -q 'if \[ "$SHOW_PROGRESS_HEADER" != "true" \]'
 }
 
 @test "display_progress_header respects LOG_LEVEL" {
-    grep -A10 "display_progress_header()" ralph.sh | grep -q 'if \[ "$LOG_LEVEL" = "ERROR" \]'
+    grep -A15 "display_progress_header()" ralph.sh | grep -q 'if \[ "$LOG_LEVEL" = "ERROR" \]'
 }
 
 @test "display_progress_header calls get_prd_data" {
-    grep -A15 "display_progress_header()" ralph.sh | grep -q "get_prd_data"
+    grep -A20 "display_progress_header()" ralph.sh | grep -q "get_prd_data"
 }
 
 @test "display_progress_header calls calculate_prd_stats" {
     grep -A25 "display_progress_header()" ralph.sh | grep -q "calculate_prd_stats"
 }
 
-@test "display_progress_header calls get_current_feature_info" {
-    grep -A30 "display_progress_header()" ralph.sh | grep -q "get_current_feature_info"
+@test "display_progress_header accepts feature parameters" {
+    # Function should accept feature_id, feature_type, description as parameters
+    grep -A10 "display_progress_header()" ralph.sh | grep -q 'local feature_id="\$1"'
 }
 
 @test "display_progress_header calculates percentage" {
@@ -106,13 +107,14 @@
     grep -A70 "display_progress_header()" ralph.sh | grep -q "═══════════════════"
 }
 
-@test "main function calls display_progress_header" {
-    awk '/^main\(\)/,/^}/' ralph.sh | grep -q "display_progress_header"
+@test "check_prerequisites calls display_progress_header" {
+    # Header is now called in check_prerequisites after feature selection (Feature 028)
+    awk '/^check_prerequisites\(\)/,/^}$/' ralph.sh | grep -q "display_progress_header"
 }
 
-@test "display_progress_header is called before check_prerequisites" {
-    # Extract main function and verify order
-    awk '/^main\(\)/,/^}/' ralph.sh | grep -B5 "check_prerequisites" | grep -q "display_progress_header"
+@test "display_progress_header is called in check_prerequisites after feature selection" {
+    # Extract check_prerequisites and verify display_progress_header comes after get_next_feature_from_prd
+    awk '/^check_prerequisites\(\)/,/^}$/' ralph.sh | grep "get_next_feature_from_prd" -A30 | grep -q "display_progress_header"
 }
 
 @test "display_progress_header handles 'none' when all complete" {
@@ -155,4 +157,36 @@
 @test "header implementation includes comment about static display" {
     # Code should have a comment explaining the static header technique
     grep -A80 "display_progress_header()" ralph.sh | grep -iq "static\|persist\|remain"
+}
+# ==========================================
+# Tests for Feature 028: Header shows correct selected feature
+# ==========================================
+
+@test "header uses get_next_feature_from_prd for feature selection" {
+    # Header should rely on get_next_feature_from_prd (which sorts by priority) instead of its own logic
+    # check_prerequisites should call get_next_feature_from_prd and pass results to header
+    awk '/^check_prerequisites\(\)/,/^}$/' ralph.sh | grep -q "get_next_feature_from_prd"
+}
+
+@test "display_progress_header is called AFTER feature selection, not before" {
+    # Header should be displayed after we know which feature will be worked on
+    # Check that display_progress_header is NOT called before check_prerequisites in main()
+    ! awk '/^main\(\)/,/^}/' ralph.sh | grep -B5 "check_prerequisites" | grep -q "display_progress_header"
+}
+
+@test "display_progress_header accepts feature parameters instead of parsing PRD" {
+    # Header should accept explicit feature_id, feature_type, description parameters
+    # This ensures it displays the SELECTED feature, not its own guess
+    grep -A5 "^display_progress_header()" ralph.sh | grep -q "local feature_id=\$1\|feature_id=\"\$1\""
+}
+
+@test "check_prerequisites passes selected feature info to header" {
+    # After feature selection in check_prerequisites, it should call display_progress_header with feature info
+    grep -A150 "^check_prerequisites()" ralph.sh | grep "get_next_feature_from_prd" -A30 | grep -q "display_progress_header.*\$"
+}
+
+@test "header no longer calls get_current_feature_info internally" {
+    # If header accepts parameters, it shouldn't need to call get_current_feature_info
+    # It should use the passed parameters instead
+    ! grep -A80 "^display_progress_header()" ralph.sh | grep -v "^#" | grep -q "get_current_feature_info"
 }
