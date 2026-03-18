@@ -944,6 +944,47 @@
           "Verify no QA path can connect to real data sources when seeded testing mode is active"
         ]
       }
+    },
+    {
+      "id": "033",
+      "type": "feature",
+      "category": "quality",
+      "priority": "high",
+      "description": "Add optional pre-implementation design-review agent invocation with architecture and UX dual-lens constraints",
+      "steps": [
+        "Add ENABLE_DESIGN_REVIEW_AGENT configuration flag in ralph.sh with values true/false (default: true)",
+        "Invoke design-review Claude session before developer agent when ENABLE_DESIGN_REVIEW_AGENT=true",
+        "Design-review prompt scope: read only PRD feature description, existing schema/API surface summaries, and .ralph/progress.txt; never read source files",
+        "Design-review output is advisory constraints only, never a block/approve verdict",
+        "Implement architecture lens guidance: identify data model inconsistencies, technical debt risk, conflicts with established patterns, and implications for not-yet-built features",
+        "Implement UX lens guidance: identify excessive user steps, dead-end states, mental-model inconsistencies, and unnecessary surfaced complexity",
+        "Require a unified constraint set that merges architecture and UX concerns when they describe the same underlying issue",
+        "Write concerns back into the target PRD feature entry as structured constraints that developer agent must satisfy",
+        "Ensure developer agent reads design constraints from PRD as part of its implementation brief",
+        "Verify ENABLE_DESIGN_REVIEW_AGENT=false skips design-review invocation entirely and preserves existing behavior",
+        "Document design-review loop behavior and ENABLE_DESIGN_REVIEW_AGENT in README.md and QUICK_REFERENCE.md"
+      ],
+      "estimated_complexity": "large",
+      "depends_on": [],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null,
+      "test_files": [
+        "tests/ralph-design-review-loop.bats"
+      ],
+      "acceptance_criteria": {
+        "unit_tests": [],
+        "e2e_tests": [
+          "tests/ralph-design-review-loop.bats"
+        ],
+        "manual_checks": [
+          "Run one loop with ENABLE_DESIGN_REVIEW_AGENT=true and verify design-review invocation occurs before developer invocation",
+          "Verify design-review prompt denies source-file access and uses only PRD feature description, schema/API surface, and progress log context",
+          "Verify resulting PRD entry gains structured constraints (not pass/fail verdict language)",
+          "Confirm developer invocation receives and follows those constraints in its brief",
+          "Set ENABLE_DESIGN_REVIEW_AGENT=false and verify loop behavior matches baseline with no pre-dev invocation"
+        ]
+      }
     }
   ],
   "notes": [
@@ -984,6 +1025,9 @@
     "Feature 032 is CRITICAL: Seed dedicated test instance for QA with deterministic fixtures and per-invocation reset isolation (NEW)",
     "Feature 032 behavior: init.sh provisions clean snapshot + fixtures + test-only server wiring; QA prompt receives known seeded-state summary",
     "Feature 032 process: fixture source evolves with new features, and QA setup resets seed state before every QA invocation",
+    "Feature 033 is HIGH priority: Add optional pre-dev design-review invocation that writes architecture+UX constraints into PRD (NEW)",
+    "Feature 033 behavior: design-review reads PRD feature, schema/API surface, and progress log only, never source code",
+    "Feature 033 output: unified concern/constraint set shapes implementation without blocking or approving work",
     "Feature 001 adds auto-PR creation with GitHub CLI (reduced scope - 000a covers branch creation)",
     "Features 002-006 implement the remaining improvements from the analysis",
     "Feature 007 improves code quality of ralph.sh (COMPLETE)",
