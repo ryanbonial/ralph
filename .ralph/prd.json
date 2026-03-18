@@ -858,6 +858,92 @@
       "passes": true,
       "iterations_taken": 1,
       "blocked_reason": null
+    },
+    {
+      "id": "031",
+      "type": "feature",
+      "category": "testing",
+      "priority": "critical",
+      "description": "Add optional QA agent second invocation in loop, enabled by default",
+      "steps": [
+        "Add ENABLE_QA_AGENT configuration flag in ralph.sh with values true/false (default: true)",
+        "After developer agent commit succeeds, conditionally invoke second Claude session with QA agent prompt when ENABLE_QA_AGENT=true",
+        "Create QA agent prompt contract: read only current PRD feature description and .ralph/qa-knowledge.md, never read source files, interact with running software only as a user",
+        "Require QA agent to write manual e2e test script first (ordered human steps derived from PRD feature spec) before any evaluation",
+        "Require QA agent to execute that manual script against running software",
+        "On pass: mark feature passing in prd.json and append structured memory entry to .ralph/qa-knowledge.md with feature area, what was tested, and patterns noticed",
+        "On fail: create new symptom-only bug ticket entry in prd.json with type='bug' describing user-observable behavior only, no root-cause speculation",
+        "Ensure failed QA bug ticket is eligible for next developer loop iteration",
+        "Ensure QA agent reads .ralph/qa-knowledge.md at start of every invocation to build institutional memory across sessions",
+        "Verify ENABLE_QA_AGENT=false skips QA invocation entirely and preserves current behavior with no regression",
+        "Document QA loop behavior and ENABLE_QA_AGENT in README.md and QUICK_REFERENCE.md"
+      ],
+      "estimated_complexity": "large",
+      "depends_on": [],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null,
+      "test_files": [
+        "tests/ralph-qa-agent-loop.bats"
+      ],
+      "acceptance_criteria": {
+        "unit_tests": [],
+        "e2e_tests": [
+          "tests/ralph-qa-agent-loop.bats"
+        ],
+        "manual_checks": [
+          "Run one feature loop with ENABLE_QA_AGENT=true and confirm developer invocation is followed by QA invocation",
+          "Verify QA prompt instructions enforce read-only-to-spec behavior (PRD feature + qa-knowledge only, no source file reading)",
+          "Verify QA writes manual sequential e2e script before evaluation",
+          "Force a failing behavior and confirm PRD receives a new symptom-only bug entry",
+          "Run a passing behavior and confirm feature is marked passing and qa-knowledge receives structured append",
+          "Set ENABLE_QA_AGENT=false and verify second invocation is skipped and baseline loop behavior is unchanged"
+        ]
+      }
+    },
+    {
+      "id": "032",
+      "type": "feature",
+      "category": "testing",
+      "priority": "critical",
+      "description": "Add seeded test instance lifecycle for QA loop with fixture evolution and per-invocation reset isolation",
+      "steps": [
+        "Extend init.sh to provision a dedicated testing instance instead of production-like data paths",
+        "Add deterministic test-state bootstrap flow: reset database to clean snapshot, seed fixture dataset, start server pointed at test dataset only",
+        "Ensure bootstrap never points to real or shared production data sources during QA runs",
+        "Introduce canonical fixture source file(s) in repo (for example .ralph/test-fixtures.*) that define known baseline entities and relationships",
+        "Require developer agent to update fixture source whenever a feature introduces new entities/relationships or materially changes data assumptions",
+        "Add developer prompt requirement: fixture updates are part of done criteria for schema/data-model-impacting features",
+        "Generate QA-readable seeded-state summary from fixtures (for example users/orders/admin counts and key states) and inject into QA prompt context",
+        "Update QA persona prompt to assume seeded known data and reference concrete known records/states in manual e2e steps",
+        "Move seed reset to QA invocation setup: before each QA run, re-apply clean snapshot + fixture seed so each feature is tested in isolation",
+        "Ensure per-QA reset happens every iteration, not only environment startup, to prevent cross-feature data contamination",
+        "Verify QA execution can mutate data during testing without affecting subsequent runs because reset runs before next QA invocation",
+        "Document seeded test-instance workflow and fixture maintenance responsibilities in README.md and QUICK_REFERENCE.md"
+      ],
+      "estimated_complexity": "large",
+      "depends_on": [
+        "031"
+      ],
+      "passes": false,
+      "iterations_taken": 0,
+      "blocked_reason": null,
+      "test_files": [
+        "tests/ralph-seeded-qa-instance.bats"
+      ],
+      "acceptance_criteria": {
+        "unit_tests": [],
+        "e2e_tests": [
+          "tests/ralph-seeded-qa-instance.bats"
+        ],
+        "manual_checks": [
+          "Run init.sh and verify database is reset to snapshot, fixtures are loaded, and server targets test dataset only",
+          "Run one loop where QA mutates data, then run next QA invocation and verify baseline fixture state is restored before testing",
+          "Implement a feature that adds a new entity type and confirm developer updates fixture file as part of completion",
+          "Verify QA prompt includes known seeded-state facts (example counts/states) and test steps reference them explicitly",
+          "Verify no QA path can connect to real data sources when seeded testing mode is active"
+        ]
+      }
     }
   ],
   "notes": [
@@ -892,6 +978,12 @@
     "Feature 030 problem: README, GETTING_STARTED, QUICK_REFERENCE, and other docs missing many implemented features",
     "Feature 030 issue: Users cannot learn about progress header, failure learning, test enforcement, Sanity integration, Docker mode, etc.",
     "Feature 030 solution: Comprehensive audit and update of all documentation files to match current ralph.sh capabilities",
+    "Feature 031 is CRITICAL: Add optional QA agent second invocation after developer commit (NEW)",
+    "Feature 031 behavior: ENABLE_QA_AGENT defaults true, QA validates from PRD spec + qa-knowledge only via user-style software interaction",
+    "Feature 031 outcomes: pass marks feature complete + appends qa-knowledge; fail creates symptom-only bug ticket looping back to dev",
+    "Feature 032 is CRITICAL: Seed dedicated test instance for QA with deterministic fixtures and per-invocation reset isolation (NEW)",
+    "Feature 032 behavior: init.sh provisions clean snapshot + fixtures + test-only server wiring; QA prompt receives known seeded-state summary",
+    "Feature 032 process: fixture source evolves with new features, and QA setup resets seed state before every QA invocation",
     "Feature 001 adds auto-PR creation with GitHub CLI (reduced scope - 000a covers branch creation)",
     "Features 002-006 implement the remaining improvements from the analysis",
     "Feature 007 improves code quality of ralph.sh (COMPLETE)",
