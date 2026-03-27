@@ -84,7 +84,7 @@ Based on:
 }
 ```
 
-**New Schema Features:**
+**Key Schema Fields:**
 
 - `type`: Feature type - `feature`, `bug`, `refactor`, or `test`
 - `depends_on`: Array of feature IDs that must complete first
