@@ -21,214 +21,6 @@ Based on:
 
 > **Note:** This is a complete production toolkit for building applications across multiple sessions. If you're looking for the official [Claude Code plugin](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum) for in-session loops, that's different—it's great for iterative refinement within a single session. This implementation focuses on **systematic multi-session development** with git integration, structured PRDs, dependency tracking, and safety features.
 
-## 📦 What's Included
-
-This kit contains everything you need:
-
-| File                            | Purpose                                        |
-| ------------------------------- | ---------------------------------------------- |
-| `The Ralph Wiggum Technique.md` | Comprehensive explanation of the technique     |
-| `AGENT_PROMPT.md`               | **Ready-to-use prompt for coding agents**      |
-| `INITIALIZER_PROMPT.md`         | **Prompt for first-time project setup**        |
-| `prd.json.template`             | Example feature list structure                 |
-| `ralph.sh`                      | Bash script to orchestrate the agent loop      |
-| `init.sh.template`              | Example development environment script         |
-| `EXAMPLE_OUTPUT.txt`            | **Real example of a complete Ralph iteration** |
-| `README.md`                     | This file - quick start guide                  |
-
-## 📁 Using Ralph Across Multiple Projects
-
-Ralph lives in `/code/ralph` as your **toolkit directory**. To use it in other projects, create a wrapper script:
-
-```bash
-# In your project directory (e.g., ~/code/my-project/)
-# Create ralph-local.sh
-cat > ralph-local.sh << 'EOF'
-#!/bin/bash
-# Wrapper to run Ralph with correct paths
-
-RALPH_DIR="$HOME/code/ralph"
-AGENT_PROMPT_FILE="$RALPH_DIR/AGENT_PROMPT.md" \
-  "$RALPH_DIR/ralph.sh" "$@"
-EOF
-
-chmod +x ralph-local.sh
-```
-
-Then run Ralph in your project:
-
-```bash
-./ralph-local.sh          # Human-in-the-loop mode
-RUN_MODE=continuous ./ralph-local.sh  # Continuous mode
-```
-
-**Or** add to your shell profile (`~/.zshrc` or `~/.bashrc`):
-
-```bash
-export RALPH_DIR="$HOME/code/ralph"
-alias ralph="AGENT_PROMPT_FILE=$RALPH_DIR/AGENT_PROMPT.md $RALPH_DIR/ralph.sh"
-```
-
-Then use `ralph` from any project directory!
-
----
-
-## 🚀 Quick Start
-
-### Option 1: New Project (Recommended)
-
-1. **Describe your project** in a text file:
-
-   ```
-   Build a todo list web app with:
-   - Add/edit/delete todos
-   - Mark as complete
-   - Filter by status
-   - Persist to local storage
-   ```
-
-2. **Run the initializer agent**:
-
-   - Open your AI agent (Cursor, Claude, etc.)
-   - Give it `INITIALIZER_PROMPT.md` + your requirements
-   - Let it create `.ralph/` directory with `prd.json`, `progress.txt`, `init.sh`, and project structure
-
-3. **Start the Ralph loop**:
-
-   **Human-in-the-Loop (Recommended for learning):**
-
-   ```bash
-   ./ralph.sh
-   ```
-
-   Runs one iteration, pauses for review, then you run it again.
-
-   **Continuous AFK Mode:**
-
-   ```bash
-   RUN_MODE=continuous ./ralph.sh
-   ```
-
-   Runs continuously until all features complete.
-
-   **Docker Sandboxed Mode (🔒 Maximum Security):**
-
-   ```bash
-   ./ralph-docker.sh
-   ```
-
-   Runs in isolated Docker container with:
-   - No host system access (only project directory)
-   - No permission prompts (bypasses IDE permissions)
-   - Clean CTRL-C handling (no double press needed)
-   - Reproducible Ubuntu environment
-
-   See [CONTINUOUS_MODE_IMPROVEMENTS.md](CONTINUOUS_MODE_IMPROVEMENTS.md) for details.
-
-4. **Watch it build**: The agent will implement features one by one, test each thoroughly, and commit progress.
-
-### Option 2: Existing Project
-
-1. **Create `.ralph/` directory and ignore it**:
-   ```bash
-   mkdir -p .ralph
-   echo ".ralph/" >> .gitignore
-   ```
-2. **Manually create `.ralph/prd.json`** using `prd.json.template` as reference
-3. **Create empty `.ralph/progress.txt`**:
-   ```bash
-   echo "=== Ralph Wiggum Progress Log ===" > .ralph/progress.txt
-   echo "Started: $(date)" >> .ralph/progress.txt
-   ```
-4. **(Optional) Create `.ralph/init.sh`** if you need automated dev server startup:
-
-   ```bash
-   # Copy and adapt the template
-   cp init.sh.template .ralph/init.sh
-   chmod +x .ralph/init.sh
-   # Edit to match your project's needs
-   ```
-
-   **Note:** Most existing projects don't need this - the agent can use your existing npm/pnpm scripts.
-
-5. **Ensure git is initialized**:
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit"
-   ```
-6. **Start the loop**:
-
-   ```bash
-   # Human-in-the-loop (one iteration at a time)
-   ./ralph.sh
-
-   # OR continuous mode (runs until complete)
-   RUN_MODE=continuous ./ralph.sh
-   ```
-
-## 🧭 Planning Mode → Ralph Workflow (Recommended)
-
-For complex projects, use **Cursor Planning Mode** to design the architecture, then convert that plan into a Ralph-compatible PRD for execution.
-
-### Why This Approach?
-
-| Phase | Tool | Purpose |
-|-------|------|---------|
-| **Planning** | Cursor Planning Mode | Think, design, architect, decide *what* to build |
-| **Execution** | Ralph | Build, test, commit, verify *one feature at a time* |
-
-**Key Benefits:**
-- 🎯 **Planning Mode** maintains full project context for architecture decisions
-- ⚡ **Ralph Mode** executes incrementally with fresh context per feature
-- 🔄 **Best of Both**: Strategic thinking + tactical implementation
-
-### Quick Workflow
-
-1. **Use Planning Mode to generate feature list**:
-
-   In Cursor, enter Planning Mode with this prompt:
-
-   ```
-   I need help planning [PROJECT DESCRIPTION].
-
-   Break this into features following Ralph PRD structure:
-   - id: 3-digit number (001, 002, etc.)
-   - type: feature/bug/refactor/test/spike
-   - category: setup/infrastructure/functional/testing/quality/documentation
-   - priority: critical/high/medium/low
-   - description: Clear 1-sentence description
-   - steps: 5-10 concrete implementation steps
-   - estimated_complexity: small/medium/large
-   - depends_on: Array of prerequisite feature IDs
-   - test_files: Expected test file paths
-
-   Output in a format easy to convert to JSON.
-   ```
-
-2. **Convert planning output to `.ralph/prd.json`**:
-   - Use `.ralph/prd.json.template` as reference
-   - Structure planning output as valid JSON
-   - Validate with: `python3 -m json.tool .ralph/prd.json`
-
-3. **Run Ralph** to execute the plan:
-   ```bash
-   ./ralph.sh  # Execute features one by one
-   ```
-
-### Full Guide
-
-See **[PLANNING_TO_PRD.md](PLANNING_TO_PRD.md)** for:
-- Complete step-by-step workflow
-- Prompt templates for Planning Mode
-- Examples of plan → PRD conversion
-- Best practices for granularity, dependencies, complexity
-- Troubleshooting common issues
-
-**TL;DR:** Planning Mode designs the roadmap, Ralph builds it incrementally.
-
----
-
 ## 🎓 How It Works
 
 ### Two Phases
@@ -316,6 +108,213 @@ See **[PLANNING_TO_PRD.md](PLANNING_TO_PRD.md)** for:
 - Existing projects can use standard npm/pnpm scripts instead
 
 **Note:** All Ralph workflow files are stored in `.ralph/` directory which is gitignored to prevent accidental commits.
+
+## 🚀 Quick Start
+
+### Option 1: New Project (Recommended)
+
+1. **Describe your project** in a text file:
+
+   ```
+   Build a todo list web app with:
+   - Add/edit/delete todos
+   - Mark as complete
+   - Filter by status
+   - Persist to local storage
+   ```
+
+2. **Run the initializer agent**:
+   - Open your AI agent (Cursor, Claude, etc.)
+   - Give it `INITIALIZER_PROMPT.md` + your requirements
+   - Let it create `.ralph/` directory with `prd.json`, `progress.txt`, `init.sh`, and project structure
+
+3. **Start the Ralph loop**:
+
+   **Human-in-the-Loop (Recommended for learning):**
+
+   ```bash
+   ./ralph.sh
+   ```
+
+   Runs one iteration, pauses for review, then you run it again.
+
+   **Continuous AFK Mode:**
+
+   ```bash
+   RUN_MODE=continuous ./ralph.sh
+   ```
+
+   Runs continuously until all features complete.
+
+   **Docker Sandboxed Mode (🔒 Maximum Security):**
+
+   ```bash
+   ./ralph-docker.sh
+   ```
+
+   Runs in isolated Docker container with:
+   - No host system access (only project directory)
+   - No permission prompts (bypasses IDE permissions)
+   - Clean CTRL-C handling (no double press needed)
+   - Reproducible Ubuntu environment
+
+   See [CONTINUOUS_MODE_IMPROVEMENTS.md](CONTINUOUS_MODE_IMPROVEMENTS.md) for details.
+
+4. **Watch it build**: The agent will implement features one by one, test each thoroughly, and commit progress.
+
+### Option 2: Existing Project
+
+1. **Create `.ralph/` directory and ignore it**:
+   ```bash
+   mkdir -p .ralph
+   echo ".ralph/" >> .gitignore
+   ```
+2. **Manually create `.ralph/prd.json`** using `prd.json.template` as reference
+3. **Create empty `.ralph/progress.txt`**:
+   ```bash
+   echo "=== Ralph Wiggum Progress Log ===" > .ralph/progress.txt
+   echo "Started: $(date)" >> .ralph/progress.txt
+   ```
+4. **(Optional) Create `.ralph/init.sh`** if you need automated dev server startup:
+
+   ```bash
+   # Copy and adapt the template
+   cp init.sh.template .ralph/init.sh
+   chmod +x .ralph/init.sh
+   # Edit to match your project's needs
+   ```
+
+   **Note:** Most existing projects don't need this - the agent can use your existing npm/pnpm scripts.
+
+5. **Ensure git is initialized**:
+   ```bash
+   git init
+   git add .
+   git commit -m "Initial commit"
+   ```
+6. **Start the loop**:
+
+   ```bash
+   # Human-in-the-loop (one iteration at a time)
+   ./ralph.sh
+
+   # OR continuous mode (runs until complete)
+   RUN_MODE=continuous ./ralph.sh
+   ```
+
+## 🧭 Planning Mode → Ralph Workflow (Recommended)
+
+For complex projects, use **Cursor Planning Mode** to design the architecture, then convert that plan into a Ralph-compatible PRD for execution.
+
+### Why This Approach?
+
+| Phase         | Tool                 | Purpose                                             |
+| ------------- | -------------------- | --------------------------------------------------- |
+| **Planning**  | Cursor Planning Mode | Think, design, architect, decide _what_ to build    |
+| **Execution** | Ralph                | Build, test, commit, verify _one feature at a time_ |
+
+**Key Benefits:**
+
+- 🎯 **Planning Mode** maintains full project context for architecture decisions
+- ⚡ **Ralph Mode** executes incrementally with fresh context per feature
+- 🔄 **Best of Both**: Strategic thinking + tactical implementation
+
+### Quick Workflow
+
+1. **Use Planning Mode to generate feature list**:
+
+   In Cursor, enter Planning Mode with this prompt:
+
+   ```
+   I need help planning [PROJECT DESCRIPTION].
+
+   Break this into features following Ralph PRD structure:
+   - id: 3-digit number (001, 002, etc.)
+   - type: feature/bug/refactor/test/spike
+   - category: setup/infrastructure/functional/testing/quality/documentation
+   - priority: critical/high/medium/low
+   - description: Clear 1-sentence description
+   - steps: 5-10 concrete implementation steps
+   - estimated_complexity: small/medium/large
+   - depends_on: Array of prerequisite feature IDs
+   - test_files: Expected test file paths
+
+   Output in a format easy to convert to JSON.
+   ```
+
+2. **Convert planning output to `.ralph/prd.json`**:
+   - Use `.ralph/prd.json.template` as reference
+   - Structure planning output as valid JSON
+   - Validate with: `python3 -m json.tool .ralph/prd.json`
+
+3. **Run Ralph** to execute the plan:
+   ```bash
+   ./ralph.sh  # Execute features one by one
+   ```
+
+### Full Guide
+
+See **[PLANNING_TO_PRD.md](PLANNING_TO_PRD.md)** for:
+
+- Complete step-by-step workflow
+- Prompt templates for Planning Mode
+- Examples of plan → PRD conversion
+- Best practices for granularity, dependencies, complexity
+- Troubleshooting common issues
+
+**TL;DR:** Planning Mode designs the roadmap, Ralph builds it incrementally.
+
+## 📦 What's Included
+
+This kit contains everything you need:
+
+| File                            | Purpose                                        |
+| ------------------------------- | ---------------------------------------------- |
+| `The Ralph Wiggum Technique.md` | Comprehensive explanation of the technique     |
+| `AGENT_PROMPT.md`               | **Ready-to-use prompt for coding agents**      |
+| `INITIALIZER_PROMPT.md`         | **Prompt for first-time project setup**        |
+| `prd.json.template`             | Example feature list structure                 |
+| `ralph.sh`                      | Bash script to orchestrate the agent loop      |
+| `init.sh.template`              | Example development environment script         |
+| `EXAMPLE_OUTPUT.txt`            | **Real example of a complete Ralph iteration** |
+| `README.md`                     | This file - quick start guide                  |
+
+## 📁 Using Ralph Across Multiple Projects
+
+Ralph lives in `/code/ralph` as your **toolkit directory**. To use it in other projects, create a wrapper script:
+
+```bash
+# In your project directory (e.g., ~/code/my-project/)
+# Create ralph-local.sh
+cat > ralph-local.sh << 'EOF'
+#!/bin/bash
+# Wrapper to run Ralph with correct paths
+
+RALPH_DIR="$HOME/code/ralph"
+AGENT_PROMPT_FILE="$RALPH_DIR/AGENT_PROMPT.md" \
+  "$RALPH_DIR/ralph.sh" "$@"
+EOF
+
+chmod +x ralph-local.sh
+```
+
+Then run Ralph in your project:
+
+```bash
+./ralph-local.sh          # Human-in-the-loop mode
+RUN_MODE=continuous ./ralph-local.sh  # Continuous mode
+```
+
+**Or** add to your shell profile (`~/.zshrc` or `~/.bashrc`):
+
+```bash
+export RALPH_DIR="$HOME/code/ralph"
+alias ralph="AGENT_PROMPT_FILE=$RALPH_DIR/AGENT_PROMPT.md $RALPH_DIR/ralph.sh"
+```
+
+Then use `ralph` from any project directory!
+
+---
 
 ## 📋 Usage Examples
 
@@ -514,10 +513,7 @@ Add optional `test_files` field to your features:
   "id": "042",
   "type": "feature",
   "description": "User can login with email and password",
-  "test_files": [
-    "tests/auth.test.js",
-    "tests/login.test.js"
-  ],
+  "test_files": ["tests/auth.test.js", "tests/login.test.js"],
   "passes": false
 }
 ```
@@ -648,6 +644,7 @@ Ralph includes `ralph-docker.sh` for running in complete isolation using Docker 
 ### Why Use Docker?
 
 **Security Benefits:**
+
 - **Isolated Environment**: Ralph runs with ZERO access to your host system
 - **Volume-Only Access**: Only your project directory is accessible (read-write)
 - **No Permission Prompts**: Bypasses IDE permission systems entirely
@@ -655,6 +652,7 @@ Ralph includes `ralph-docker.sh` for running in complete isolation using Docker 
 - **Reproducible**: Same Ubuntu 22.04, Node.js 20.x, Python 3 environment every time
 
 **Perfect for:**
+
 - Overnight continuous mode runs
 - Untrusted or experimental code
 - Remote server deployments
@@ -706,15 +704,15 @@ DOCKER_IMAGE_NAME=ralph-env   # Custom image name
 
 ### Comparison: Docker vs Standard Mode
 
-| Feature                    | Standard Mode    | Docker Mode    |
-| -------------------------- | ---------------- | -------------- |
-| Host System Access         | Full             | **None**       |
-| Permission Prompts         | May interrupt    | **None**       |
-| CTRL-C Behavior            | May need 2×      | **Clean 1×**   |
-| Setup Time                 | Instant          | ~2 min first   |
-| Environment Consistency    | Varies by system | **Guaranteed** |
-| Overhead                   | None             | Minimal        |
-| Best For                   | Development      | Production     |
+| Feature                 | Standard Mode    | Docker Mode    |
+| ----------------------- | ---------------- | -------------- |
+| Host System Access      | Full             | **None**       |
+| Permission Prompts      | May interrupt    | **None**       |
+| CTRL-C Behavior         | May need 2×      | **Clean 1×**   |
+| Setup Time              | Instant          | ~2 min first   |
+| Environment Consistency | Varies by system | **Guaranteed** |
+| Overhead                | None             | Minimal        |
+| Best For                | Development      | Production     |
 
 ### Advanced Usage
 
@@ -738,6 +736,7 @@ REBUILD=true ./ralph-docker.sh
 **Troubleshooting:**
 
 See [CONTINUOUS_MODE_IMPROVEMENTS.md](CONTINUOUS_MODE_IMPROVEMENTS.md#solution-3-docker-setup-for-safe-continuous-mode--implemented) for:
+
 - Docker installation instructions
 - Common issues and solutions
 - Volume mount configuration
@@ -770,10 +769,7 @@ Ralph supports structured acceptance criteria to make testing requirements expli
   "description": "User can submit form with validation",
   "test_files": ["tests/form-validation.test.js"],
   "acceptance_criteria": {
-    "unit_tests": [
-      "tests/form-validation.test.js",
-      "tests/validators.test.js"
-    ],
+    "unit_tests": ["tests/form-validation.test.js", "tests/validators.test.js"],
     "e2e_tests": [
       "tests/e2e/form-submit-valid.spec.js",
       "tests/e2e/form-submit-invalid.spec.js"
@@ -788,12 +784,14 @@ Ralph supports structured acceptance criteria to make testing requirements expli
 ```
 
 **Benefits:**
+
 - **Explicit test requirements**: Specify exactly which test files must exist
 - **Structured approach**: Separate unit tests, e2e tests, and manual checks
 - **Quality gate enforcement**: Ralph verifies all test files exist before completion
 - **Clear guidance**: Manual checks provide verification steps for agents
 
 **How it works:**
+
 1. Agent reads acceptance_criteria from PRD when working on feature
 2. Agent creates all specified test files during implementation
 3. Quality Gate 5 verifies all test files from acceptance_criteria exist
@@ -994,6 +992,7 @@ LOG_LEVEL=WARN ./ralph.sh
 ```
 
 **Log Level Hierarchy:**
+
 - `DEBUG`: Most verbose - shows tool checks, internal operations, all messages
 - `INFO`: Normal verbosity - shows informational messages, warnings, errors (default)
 - `WARN`: Shows only warnings and errors
@@ -1018,6 +1017,7 @@ LOG_LEVEL=DEBUG LOG_FILE=".ralph/ralph.log" ./ralph.sh
 ```
 
 **Log file format:**
+
 ```
 [2025-01-26 10:30:15] [INFO] Checking prerequisites...
 [2025-01-26 10:30:15] [DEBUG] ✓ git is installed
@@ -1034,6 +1034,7 @@ Run a comprehensive health check to verify your Ralph setup:
 ```
 
 **What it checks:**
+
 1. **Required Tools**: git, python3, curl are installed
 2. **Git Repository**: Repository exists, current branch status
 3. **.ralph Directory**: PRD file, progress file, valid JSON structure
@@ -1043,6 +1044,7 @@ Run a comprehensive health check to verify your Ralph setup:
 7. **Quality Gates**: Checks for lint, test, typecheck, format scripts
 
 **Example output:**
+
 ```
 ╔════════════════════════════════════════╗
 ║   Ralph Wiggum Health Check (Doctor)  ║
@@ -1067,15 +1069,18 @@ Run a comprehensive health check to verify your Ralph setup:
 Ralph automatically checks for required tools before running:
 
 **Required tools:**
+
 - `git` - Version control
 - `python3` - JSON parsing and PRD manipulation
 - `curl` - HTTP requests (for Sanity integration)
 
 **Optional tools:**
+
 - `node` / `npm` - JavaScript quality gates
 - `jq` - JSON parsing (Python used as fallback)
 
 If a required tool is missing, Ralph provides installation instructions:
+
 ```
 [ERROR] ✗ python3 is not installed or not in PATH
 [INFO]   Install with: brew install python3 (macOS) or apt-get install python3 (Linux)
@@ -1086,6 +1091,7 @@ If a required tool is missing, Ralph provides installation instructions:
 For common issues and solutions, see **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)**
 
 The guide includes:
+
 - Quick health check instructions
 - Common error messages and solutions
 - Installation instructions for missing tools
@@ -1097,6 +1103,7 @@ The guide includes:
 - Configuration debugging
 
 **Quick troubleshooting:**
+
 ```bash
 # 1. Run health check
 ./ralph.sh --doctor
@@ -1116,17 +1123,20 @@ python3 -m json.tool .ralph/prd.json
 Ralph provides helpful error messages with suggestions:
 
 **Before (generic):**
+
 ```
 Error: File not found
 ```
 
 **After (helpful):**
+
 ```
 [ERROR] PRD file not found: .ralph/prd.json
 [INFO] Run the initializer agent first, or create .ralph/ directory manually
 ```
 
 **Graceful degradation:**
+
 - Missing optional tools don't block execution
 - Helpful suggestions for fixing issues
 - Clear indication of what's required vs optional
@@ -1172,6 +1182,7 @@ TEST_OUTPUT_MODE=full ./ralph.sh
 #### Example Output
 
 **When tests pass (failures mode):**
+
 ```
 🧪 Quality Gate 4/5: Test Suite
 
@@ -1183,6 +1194,7 @@ TEST_OUTPUT_MODE=full ./ralph.sh
 ```
 
 **When tests fail (failures mode):**
+
 ```
 🧪 Quality Gate 4/5: Test Suite
 
@@ -1218,15 +1230,18 @@ The parser automatically detects the test format and extracts relevant informati
 #### Token Savings
 
 **Before Feature 011 (full mode):**
+
 - 138 passing tests = ~800 lines of output = ~6,000 tokens consumed
 - All test details shown even when passing
 
 **After Feature 011 (failures mode):**
+
 - 138 passing tests = ~7 lines of output = ~50 tokens consumed
 - **99% reduction in tokens when tests pass**
 - Only failures shown when needed
 
 **Impact on continuous mode:**
+
 - Each iteration conserves ~5,950 tokens when tests pass
 - 10 iterations = ~60,000 tokens saved
 - Allows more iterations within context window limits
@@ -1269,6 +1284,7 @@ PRD_STORAGE=sanity ./ralph.sh
 **How It Works:**
 
 When `PRD_STORAGE=sanity`, Ralph:
+
 - Fetches PRD from Sanity using GROQ queries (no local file required)
 - Updates feature status directly in Sanity via mutations API
 - Uses Sanity as the single source of truth (no file syncing)
@@ -1285,6 +1301,7 @@ The Sanity schema definitions are available in `.ralph/sanity/schemas/`:
 **Setup Instructions:**
 
 1. **Deploy Schemas** (choose one method):
+
    ```bash
    # Option A: Using Sanity CLI (if you have a local Studio)
    cd .ralph/sanity
@@ -1305,6 +1322,7 @@ The Sanity schema definitions are available in `.ralph/sanity/schemas/`:
    - Copy the token value
 
 3. **Configure Environment**:
+
    ```bash
    export SANITY_PROJECT_ID="abc123"
    export SANITY_DATASET="production"
@@ -1313,6 +1331,7 @@ The Sanity schema definitions are available in `.ralph/sanity/schemas/`:
    ```
 
 4. **Migrate Your PRD**:
+
    ```bash
    # Generate Sanity document JSON
    node .ralph/sanity/migrate.js > prd-document.json
@@ -1332,6 +1351,7 @@ The Sanity schema definitions are available in `.ralph/sanity/schemas/`:
 **Documentation:**
 
 See `.ralph/sanity/README.md` for:
+
 - Complete setup instructions
 - Schema deployment options
 - Migration guide
@@ -1384,6 +1404,7 @@ SHOW_PROGRESS_HEADER=false ./ralph.sh
 **Technical Implementation:**
 
 The header uses terminal control sequences (`tput`) to:
+
 1. Save the current cursor position
 2. Move cursor to top of screen (row 0, column 0)
 3. Display the header with color coding:
