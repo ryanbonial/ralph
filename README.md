@@ -1505,6 +1505,51 @@ Failure learning is automatically enabled when `ROLLBACK_ON_FAILURE=true` (the d
 3. **Iteration 2**: Agent reads `ROLLBACK` entry, sees linting errors, fixes them, commits successfully
 4. Feature is now complete with proper quality
 
+### QA Agent Loop (Feature 031)
+
+After the developer agent successfully commits and passes quality gates, Ralph can invoke a second **QA agent** that evaluates the feature from a pure user perspective—without reading source code.
+
+**How It Works:**
+
+1. **Developer agent** implements the feature and commits
+2. Ralph runs quality gates (linting, tests, etc.)
+3. If quality gates pass, Ralph invokes the **QA agent** with `QA_AGENT_PROMPT.md`
+4. The QA agent:
+   - Reads only the PRD feature spec and `.ralph/qa-knowledge.md` (no source files)
+   - Writes a manual E2E test script based on the feature spec
+   - Executes the test script against the running software
+   - On **PASS**: appends a structured memory entry to `.ralph/qa-knowledge.md`
+   - On **FAIL**: creates a new symptom-only bug ticket in `.ralph/prd.json`
+5. Bug tickets from QA failures become work items for the next developer iteration
+
+**Key Benefits:**
+
+- ✅ **User perspective**: QA agent acts as a user, not a developer
+- ✅ **Institutional memory**: `.ralph/qa-knowledge.md` builds knowledge across sessions
+- ✅ **Symptom-only bugs**: No root-cause speculation in bug reports
+- ✅ **Automatic**: Runs after every successful developer commit by default
+
+**Configuration:**
+
+```bash
+# Enable or disable QA agent (default: true)
+ENABLE_QA_AGENT=true ./ralph.sh
+
+# Disable QA agent to preserve original single-agent behavior
+ENABLE_QA_AGENT=false ./ralph.sh
+
+# Use a custom QA prompt file
+QA_AGENT_PROMPT_FILE=my-qa-prompt.md ./ralph.sh
+
+# Use a custom QA knowledge file location
+QA_KNOWLEDGE_FILE=.ralph/my-qa-knowledge.md ./ralph.sh
+```
+
+**Files:**
+
+- `QA_AGENT_PROMPT.md` — Instructions for the QA agent (like `AGENT_PROMPT.md` for developers)
+- `.ralph/qa-knowledge.md` — Institutional QA memory, auto-initialized on first run
+
 ### Combine Options
 
 ```bash

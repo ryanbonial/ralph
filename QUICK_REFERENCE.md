@@ -357,6 +357,15 @@ LOG_FILE=".ralph/ralph.log"
 
 # Progress header (default: true)
 SHOW_PROGRESS_HEADER=true
+
+# QA agent second pass after developer commit (default: true)
+ENABLE_QA_AGENT=true
+# Disable QA agent to preserve single-agent behavior
+ENABLE_QA_AGENT=false
+# Custom QA prompt file (default: QA_AGENT_PROMPT.md)
+QA_AGENT_PROMPT_FILE="QA_AGENT_PROMPT.md"
+# Custom QA knowledge file (default: .ralph/qa-knowledge.md)
+QA_KNOWLEDGE_FILE=".ralph/qa-knowledge.md"
 ```
 
 ### Advanced Options
