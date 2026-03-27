@@ -93,6 +93,15 @@ LOG_FILE="${LOG_FILE:-}"
 # Default: true (shows header at start of each iteration)
 SHOW_PROGRESS_HEADER="${SHOW_PROGRESS_HEADER:-true}"
 
+# QA Agent Configuration (Feature 031)
+# Run a second QA agent invocation after developer agent commits successfully
+# When true, invokes a QA agent to evaluate features from a user perspective
+ENABLE_QA_AGENT="${ENABLE_QA_AGENT:-true}"
+# QA agent prompt file - instructions given to the QA agent
+QA_AGENT_PROMPT_FILE="${QA_AGENT_PROMPT_FILE:-QA_AGENT_PROMPT.md}"
+# QA knowledge file - institutional memory persisted across QA sessions
+QA_KNOWLEDGE_FILE="${QA_KNOWLEDGE_FILE:-.ralph/qa-knowledge.md}"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -893,6 +902,18 @@ check_prerequisites() {
         echo "" >> "$PROGRESS_FILE"
     fi
 
+    # Initialize QA knowledge base if enabled and not yet created (Feature 031)
+    if [ "$ENABLE_QA_AGENT" = "true" ] && [ ! -f "$QA_KNOWLEDGE_FILE" ]; then
+        log_info "Initializing QA knowledge base: $QA_KNOWLEDGE_FILE"
+        cat > "$QA_KNOWLEDGE_FILE" <<'QAKNOWLEDGE_EOF'
+# QA Agent Knowledge Base
+
+This file records institutional QA memory across sessions. Each entry is written
+by the QA agent after evaluating a feature, capturing what was tested and patterns noticed.
+
+QAKNOWLEDGE_EOF
+    fi
+
     # Check if git repo exists
     if [ ! -d ".git" ]; then
         log_warning "No git repository found. Initializing..."
@@ -1027,6 +1048,7 @@ run_doctor() {
     log_info "  ROLLBACK_ON_FAILURE: $ROLLBACK_ON_FAILURE"
     log_info "  VERIFY_BEFORE_COMPLETE: $VERIFY_BEFORE_COMPLETE"
     log_info "  TEST_REQUIRED_FOR_FEATURES: $TEST_REQUIRED_FOR_FEATURES"
+    log_info "  ENABLE_QA_AGENT: $ENABLE_QA_AGENT"
     log_info "  PRD_STORAGE: $PRD_STORAGE"
     if [ -n "$LOG_FILE" ]; then
         log_info "  LOG_FILE: $LOG_FILE"
@@ -1774,6 +1796,13 @@ run_single_iteration() {
     ITERATION_START_TIME=$(date +%s)
     log_debug "Iteration start time: $ITERATION_START_TIME"
 
+    # Snapshot passed feature IDs before agent runs (for QA agent feature detection)
+    local PRE_AGENT_PASSED_IDS=""
+    if [ "$ENABLE_QA_AGENT" = "true" ]; then
+        PRE_AGENT_PASSED_IDS=$(get_passed_feature_ids)
+        log_debug "Pre-agent passed feature IDs: $PRE_AGENT_PASSED_IDS"
+    fi
+
     # Run the agent based on configured mode
     execute_agent
 
@@ -1812,6 +1841,28 @@ run_single_iteration() {
                     fi
                 else
                     log_success "Verification passed - changes accepted"
+
+                    # Invoke QA agent if enabled (Feature 031)
+                    if [ "$ENABLE_QA_AGENT" = "true" ]; then
+                        local newly_passed_feature
+                        newly_passed_feature=$(find_newly_passed_feature "$PRE_AGENT_PASSED_IDS" 2>/dev/null || echo "")
+                        if [ -n "$newly_passed_feature" ]; then
+                            run_qa_agent "$newly_passed_feature"
+                        else
+                            log_debug "QA agent: no newly-passed feature detected, skipping QA invocation"
+                        fi
+                    fi
+                fi
+            else
+                # Verification disabled - still run QA agent if enabled
+                if [ "$ENABLE_QA_AGENT" = "true" ]; then
+                    local newly_passed_feature
+                    newly_passed_feature=$(find_newly_passed_feature "$PRE_AGENT_PASSED_IDS" 2>/dev/null || echo "")
+                    if [ -n "$newly_passed_feature" ]; then
+                        run_qa_agent "$newly_passed_feature"
+                    else
+                        log_debug "QA agent: no newly-passed feature detected, skipping QA invocation"
+                    fi
                 fi
             fi
         else
@@ -1856,6 +1907,13 @@ run_continuous_loop() {
         ITERATION_START_TIME=$(date +%s)
         log_debug "Iteration start time: $ITERATION_START_TIME"
 
+        # Snapshot passed feature IDs before agent runs (for QA agent feature detection)
+        local PRE_AGENT_PASSED_IDS=""
+        if [ "$ENABLE_QA_AGENT" = "true" ]; then
+            PRE_AGENT_PASSED_IDS=$(get_passed_feature_ids)
+            log_debug "Pre-agent passed feature IDs: $PRE_AGENT_PASSED_IDS"
+        fi
+
         # Run the agent
         execute_agent
 
@@ -1892,6 +1950,28 @@ run_continuous_loop() {
                         fi
                     else
                         log_success "Verification passed - changes accepted"
+
+                        # Invoke QA agent if enabled (Feature 031)
+                        if [ "$ENABLE_QA_AGENT" = "true" ]; then
+                            local newly_passed_feature
+                            newly_passed_feature=$(find_newly_passed_feature "$PRE_AGENT_PASSED_IDS" 2>/dev/null || echo "")
+                            if [ -n "$newly_passed_feature" ]; then
+                                run_qa_agent "$newly_passed_feature"
+                            else
+                                log_debug "QA agent: no newly-passed feature detected, skipping QA invocation"
+                            fi
+                        fi
+                    fi
+                else
+                    # Verification disabled - still run QA agent if enabled
+                    if [ "$ENABLE_QA_AGENT" = "true" ]; then
+                        local newly_passed_feature
+                        newly_passed_feature=$(find_newly_passed_feature "$PRE_AGENT_PASSED_IDS" 2>/dev/null || echo "")
+                        if [ -n "$newly_passed_feature" ]; then
+                            run_qa_agent "$newly_passed_feature"
+                        else
+                            log_debug "QA agent: no newly-passed feature detected, skipping QA invocation"
+                        fi
                     fi
                 fi
             else
@@ -1968,6 +2048,178 @@ execute_agent() {
     esac
 }
 
+# ==========================================
+# QA Agent Loop (Feature 031)
+# ==========================================
+
+# Get comma-separated list of feature IDs currently marked as passing
+get_passed_feature_ids() {
+    python3 -c "
+import json
+try:
+    with open('$PRD_FILE') as f:
+        prd = json.load(f)
+    ids = [str(feat['id']) for feat in prd.get('features', []) if feat.get('passes') == True]
+    print(','.join(ids))
+except Exception:
+    print('')
+"
+}
+
+# Find a feature that was not in the pre-agent passed list but is now passing
+# Args: $1 = comma-separated list of IDs that were passing before agent ran
+find_newly_passed_feature() {
+    local pre_passed_ids="$1"
+
+    python3 -c "
+import json
+import sys
+
+pre_ids_str = '$pre_passed_ids'
+pre_ids = set(pre_ids_str.split(',')) if pre_ids_str.strip() else set()
+
+try:
+    with open('$PRD_FILE') as f:
+        prd = json.load(f)
+except Exception:
+    sys.exit(1)
+
+for feature in prd.get('features', []):
+    if feature.get('passes') == True:
+        fid = str(feature.get('id', ''))
+        if fid not in pre_ids:
+            print(json.dumps(feature))
+            sys.exit(0)
+
+sys.exit(1)
+"
+}
+
+# Execute the QA agent with a given prompt file
+execute_qa_agent() {
+    local prompt_file="$1"
+    log_info "Running QA agent (mode: $AI_AGENT_MODE)..."
+
+    case "$AI_AGENT_MODE" in
+        claude)
+            if command -v claude &> /dev/null; then
+                cat "$prompt_file" | claude
+            elif command -v npx &> /dev/null; then
+                log_info "Claude CLI not found globally, trying npx..."
+                cat "$prompt_file" | npx -y @anthropic-ai/claude-cli
+            else
+                log_error "Claude CLI not found. Skipping QA agent for this iteration."
+                return 1
+            fi
+            ;;
+        cursor)
+            if command -v cursor-agent &> /dev/null; then
+                cat "$prompt_file" | cursor-agent
+            else
+                log_error "Cursor CLI not found. Skipping QA agent."
+                return 1
+            fi
+            ;;
+        custom)
+            if [ -n "$AI_AGENT_CUSTOM_CMD" ]; then
+                log_info "Using custom command: $AI_AGENT_CUSTOM_CMD"
+                cat "$prompt_file" | $AI_AGENT_CUSTOM_CMD
+            else
+                log_error "AI_AGENT_CUSTOM_CMD not set. Skipping QA agent."
+                return 1
+            fi
+            ;;
+        manual|*)
+            echo ""
+            log_warning "MANUAL QA STEP REQUIRED:"
+            echo "1. Open your AI agent (Claude, Cursor, etc.)"
+            echo "2. Provide this QA prompt file: $prompt_file"
+            echo "3. Let the QA agent evaluate the feature from a user perspective"
+            echo "4. QA agent will update prd.json and qa-knowledge.md"
+            echo ""
+            read -p "Press Enter when QA agent has completed evaluation..."
+            ;;
+    esac
+}
+
+# Run the QA agent for a newly-implemented feature
+# Args: $1 = feature JSON string
+run_qa_agent() {
+    local feature_json="$1"
+
+    local feature_id
+    feature_id=$(echo "$feature_json" | python3 -c "import json,sys; print(json.load(sys.stdin).get('id', 'unknown'))")
+    local feature_desc
+    feature_desc=$(echo "$feature_json" | python3 -c "import json,sys; print(json.load(sys.stdin).get('description', ''))")
+
+    echo ""
+    echo "=========================================="
+    log_info "QA Agent: Evaluating feature [$feature_id]"
+    echo "=========================================="
+    echo ""
+    log_info "Feature: $feature_desc"
+    echo ""
+
+    # Ensure QA_AGENT_PROMPT_FILE exists
+    if [ ! -f "$QA_AGENT_PROMPT_FILE" ]; then
+        log_warning "QA agent prompt file not found: $QA_AGENT_PROMPT_FILE"
+        log_info "Skipping QA agent invocation"
+        return 0
+    fi
+
+    # Ensure qa-knowledge.md exists
+    if [ ! -f "$QA_KNOWLEDGE_FILE" ]; then
+        log_info "Initializing QA knowledge base: $QA_KNOWLEDGE_FILE"
+        cat > "$QA_KNOWLEDGE_FILE" <<'QAKNOWLEDGE_EOF'
+# QA Agent Knowledge Base
+
+This file records institutional QA memory across sessions. Each entry is written
+by the QA agent after evaluating a feature, capturing what was tested and patterns noticed.
+
+QAKNOWLEDGE_EOF
+    fi
+
+    # Build a temporary prompt combining QA instructions + feature context + knowledge
+    local qa_prompt_tmp
+    qa_prompt_tmp=$(mktemp /tmp/ralph-qa-prompt-XXXXXX.md)
+
+    {
+        cat "$QA_AGENT_PROMPT_FILE"
+        echo ""
+        echo "---"
+        echo ""
+        echo "## Feature Under QA Review"
+        echo ""
+        echo "**Feature ID:** $feature_id"
+        echo "**Description:** $feature_desc"
+        echo ""
+        echo "### Full Feature Specification (from PRD)"
+        echo ""
+        echo '```json'
+        echo "$feature_json"
+        echo '```'
+        echo ""
+        echo "---"
+        echo ""
+        echo "## QA Knowledge Base"
+        echo ""
+        echo "Contents of \`$QA_KNOWLEDGE_FILE\`:"
+        echo ""
+        cat "$QA_KNOWLEDGE_FILE"
+        echo ""
+    } > "$qa_prompt_tmp"
+
+    # Invoke the QA agent
+    execute_qa_agent "$qa_prompt_tmp"
+
+    # Clean up temp prompt
+    rm -f "$qa_prompt_tmp"
+
+    echo ""
+    log_success "QA agent evaluation complete for feature [$feature_id]"
+    echo ""
+}
+
 # Main execution
 main() {
     # Parse command line arguments
@@ -2009,6 +2261,7 @@ main() {
                 echo "  AUTO_CREATE_BRANCH    'true' (default) or 'false'"
                 echo "  PROTECTED_BRANCHES    Comma-separated list (default: 'main,master')"
                 echo "  ALLOW_GIT_PUSH        'true' or 'false' (default: false)"
+                echo "  ENABLE_QA_AGENT       'true' (default) or 'false' - QA second pass"
                 echo "  PRD_STORAGE           'file' (default) or 'sanity'"
                 echo ""
                 echo "Examples:"

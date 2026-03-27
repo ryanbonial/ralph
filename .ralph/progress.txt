@@ -1492,3 +1492,57 @@ Notes for next iteration:
 - Next available high-priority features: 001 (auto-PR), 018 (spike mode)
 - Next available features: 001, 002, 005, 006, 016, 018
 ---
+
+--- 2026-03-27 (Feature 031) ---
+Feature: [031] Add optional QA agent second invocation in loop, enabled by default
+Status: Completed
+Type: feature
+Complexity: large
+
+Implementation:
+- Added ENABLE_QA_AGENT config var (default: true) to ralph.sh
+- Added QA_AGENT_PROMPT_FILE config var (default: QA_AGENT_PROMPT.md)
+- Added QA_KNOWLEDGE_FILE config var (default: .ralph/qa-knowledge.md)
+- Added get_passed_feature_ids() function - snapshots passing feature IDs before agent runs
+- Added find_newly_passed_feature() function - detects which feature was newly marked passing
+- Added execute_qa_agent() function - invokes AI agent with QA prompt (supports claude/cursor/custom/manual modes)
+- Added run_qa_agent() function - builds temp prompt combining QA instructions + feature context + qa-knowledge, then calls execute_qa_agent
+- Modified run_single_iteration() to snapshot passed IDs before agent, invoke QA agent after successful verification
+- Modified run_continuous_loop() with same QA agent integration
+- Added qa-knowledge.md initialization in check_prerequisites when ENABLE_QA_AGENT=true
+- Added ENABLE_QA_AGENT to doctor configuration output and --help environment variables
+- Created QA_AGENT_PROMPT.md with full QA agent contract:
+  * Read-only constraints (no source files, only PRD feature spec and qa-knowledge.md)
+  * Step 1: Write manual E2E test script before evaluation (required)
+  * Step 2: Execute manual script against running software
+  * Step 3: Evaluate PASS or FAIL
+  * Step 4A (PASS): append structured entry to qa-knowledge.md
+  * Step 4B (FAIL): create symptom-only bug ticket in prd.json
+  * Step 5: Always append to qa-knowledge.md (even on fail)
+- Updated README.md with QA Agent Loop section documenting behavior, benefits, and configuration
+- Updated QUICK_REFERENCE.md with QA agent configuration options
+
+Key Files Modified:
+- ralph.sh: Added ~130 lines for QA agent support
+- QA_AGENT_PROMPT.md: Created new file (QA agent instructions)
+- tests/ralph-qa-agent-loop.bats: Created new test file (32 tests, all pass)
+- README.md: Added QA Agent Loop section
+- QUICK_REFERENCE.md: Added QA agent config options
+- .ralph/prd.json: Marked feature 031 as complete with iterations_taken=1
+
+Testing:
+- ✅ All 307 tests pass (32 new tests in ralph-qa-agent-loop.bats)
+- ✅ No new test failures introduced
+- ✅ bash -n ralph.sh: valid syntax
+- ✅ Tests cover: config defaults, all new functions, QA prompt file existence, prompt content contract, doctor output, temp file handling, ENABLE_QA_AGENT=false guard
+
+Challenges:
+- test for execute_qa_agent manual mode needed -A 50 not -A 30 (function longer than 30 lines)
+
+Notes for next iteration:
+- Feature 031 complete - QA agent loop is now available
+- Feature 032 (seeded test instance lifecycle) depends on 031 and is now unblocked
+- Feature 033 (design-review agent) has no dependencies and is high priority
+- Next critical feature with deps met: none remaining critical after 031
+- Next high priority with deps met: 033 (design-review agent invocation)
+---

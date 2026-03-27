@@ -502,7 +502,7 @@
         "Document how to use Cursor Planning Mode to generate feature backlog",
         "Add prompt template for asking Planning Mode to output Ralph-compatible format",
         "Create script or helper to validate/convert planning output to prd.json schema",
-        "Add examples showing Planning Mode output → Ralph PRD translation",
+        "Add examples showing Planning Mode output \u2192 Ralph PRD translation",
         "Document best practices: Planning Mode for architecture, Ralph for execution",
         "Add section to README explaining the Planning + Ralph workflow",
         "Include tips on granularity, dependencies, and complexity estimation",
@@ -880,8 +880,8 @@
       ],
       "estimated_complexity": "large",
       "depends_on": [],
-      "passes": false,
-      "iterations_taken": 0,
+      "passes": true,
+      "iterations_taken": 1,
       "blocked_reason": null,
       "test_files": [
         "tests/ralph-qa-agent-loop.bats"
