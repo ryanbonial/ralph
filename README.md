@@ -49,9 +49,15 @@ Based on:
    ↓
 7. Log to .ralph/progress.txt
    ↓
-8. Git commit
+8. Git commit → Quality gates (lint, types, tests)
    ↓
-9. Repeat until all features pass
+9. QA Agent validates from user perspective (if ENABLE_QA_AGENT=true)
+   - Reads PRD spec + qa-knowledge only (no source code)
+   - Writes manual E2E test script, executes it
+   - PASS → appends to .ralph/qa-knowledge.md
+   - FAIL → creates symptom-only bug ticket in PRD
+   ↓
+10. Repeat until all features pass
 ```
 
 ### Key Files
@@ -106,6 +112,18 @@ Based on:
 - Used by agent to test features
 - **Only needed for new projects or complex setups**
 - Existing projects can use standard npm/pnpm scripts instead
+
+**`QA_AGENT_PROMPT.md`** - QA Agent Instructions
+
+- Prompt for the optional QA agent invoked after each developer commit
+- QA agent reads only PRD spec and `.ralph/qa-knowledge.md` (no source code)
+- Validates features from a user perspective via manual E2E test scripts
+
+**`.ralph/qa-knowledge.md`** - QA Institutional Memory
+
+- Structured knowledge base built across QA sessions
+- Each passing QA run appends what was tested and patterns noticed
+- Read by the QA agent at the start of every invocation
 
 **Note:** All Ralph workflow files are stored in `.ralph/` directory which is gitignored to prevent accidental commits.
 
@@ -272,6 +290,7 @@ This kit contains everything you need:
 | ------------------------------- | ---------------------------------------------- |
 | `The Ralph Wiggum Technique.md` | Comprehensive explanation of the technique     |
 | `AGENT_PROMPT.md`               | **Ready-to-use prompt for coding agents**      |
+| `QA_AGENT_PROMPT.md`            | **Prompt for QA agent (user-perspective validation)** |
 | `INITIALIZER_PROMPT.md`         | **Prompt for first-time project setup**        |
 | `prd.json.template`             | Example feature list structure                 |
 | `ralph.sh`                      | Bash script to orchestrate the agent loop      |
@@ -418,10 +437,22 @@ VERIFY_BEFORE_COMPLETE=true ./ralph.sh
 - Only accepts commits if all quality gates pass
 - See "Code Quality Gates" section below for details
 
+**QA Agent Validation:**
+
+```bash
+# Enabled by default
+ENABLE_QA_AGENT=true ./ralph.sh
+```
+
+- After quality gates pass, a second QA agent validates from the user's perspective
+- QA agent reads only the PRD spec and `.ralph/qa-knowledge.md` (no source code)
+- On failure, creates a symptom-only bug ticket for the next developer iteration
+- See "QA Agent Loop" section below for details
+
 **Disable for manual control:**
 
 ```bash
-ROLLBACK_ON_FAILURE=false VERIFY_BEFORE_COMPLETE=false ./ralph.sh
+ROLLBACK_ON_FAILURE=false VERIFY_BEFORE_COMPLETE=false ENABLE_QA_AGENT=false ./ralph.sh
 ```
 
 ## 🎨 Code Quality Gates
@@ -1505,7 +1536,7 @@ Failure learning is automatically enabled when `ROLLBACK_ON_FAILURE=true` (the d
 3. **Iteration 2**: Agent reads `ROLLBACK` entry, sees linting errors, fixes them, commits successfully
 4. Feature is now complete with proper quality
 
-### QA Agent Loop (Feature 031)
+### QA Agent Loop
 
 After the developer agent successfully commits and passes quality gates, Ralph can invoke a second **QA agent** that evaluates the feature from a pure user perspective—without reading source code.
 
@@ -1575,6 +1606,8 @@ A well-running Ralph loop shows:
 - ✅ Decreasing `"passes": false` count in `.ralph/prd.json`
 - ✅ Detailed progress notes in `.ralph/progress.txt` after each iteration
 - ✅ Tests passing continuously (automatic verification)
+- ✅ QA agent validating features from user perspective (when enabled)
+- ✅ Growing `.ralph/qa-knowledge.md` with institutional QA memory
 - ✅ Clean, working code at all times
 - ✅ `.ralph/` directory properly gitignored
 - ✅ Features with dependencies completed in order
