@@ -19,6 +19,24 @@ Based on:
 - [Anthropic's research on long-running agent harnesses](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
 - [Geoffrey Huntley's Ralph Wiggum loop pattern](https://ghuntley.com/ralph/)
 
+### Why This Implementation Is Different
+
+Most Ralph implementations—and most LLM coding agents in general—reflect the culture that shaped the training data they learned from: startup "move fast and break things" development, rapid iteration blogs, and open-source projects built without process. That culture is fast, but it's also fragile.
+
+This implementation takes a deliberately different philosophy, one borrowed from an unlikely source: **enterprise waterfall software development.**
+
+Old-school enterprise shops were infamous for their bureaucracy. Every change started with a design document that had to be reviewed and signed off. Database changes went to a DBA for approval. Releases moved through formal change management. Once code was written, it went to a separate QA team who documented their test cases and sent everything back if anything failed. These companies were miserable to work for because all that process friction wore people down—endless approval gates, mountains of documentation, and a glacial pace that demoralized even the most patient engineers.
+
+But here's the insight: **an LLM agent doesn't get worn down.** It doesn't resent filling out the design doc or sitting through the approval meeting. It doesn't feel the soul-crushing weight of a QA rejection. What was a human-scale dysfunction becomes a machine-scale feature.
+
+When you require an agent to meet every process gate—document the plan, get it checked, implement, commit, run quality gates, hand off to a separate QA agent who validates from the user's perspective, log findings, and repeat—you get something those enterprise shops always _wanted_ but could never sustain: **complete, disciplined adherence to process on every single change.**
+
+This is why this implementation includes multiple specialized agents and mandatory checkpoints rather than a simple loop. The Developer agent codes; the QA agent validates without ever reading the source code, only the spec. Progress is tracked in structured documents. Each iteration leaves the codebase and its documentation in a consistent, audited state.
+
+The bureaucracy isn't a burden here. It's the point.
+
+---
+
 > **Note:** This is a complete production toolkit for building applications across multiple sessions. If you're looking for the official [Claude Code plugin](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum) for in-session loops, that's different—it's great for iterative refinement within a single session. This implementation focuses on **systematic multi-session development** with git integration, structured PRDs, dependency tracking, and safety features.
 
 ## 🎓 How It Works
@@ -286,17 +304,17 @@ See **[PLANNING_TO_PRD.md](PLANNING_TO_PRD.md)** for:
 
 This kit contains everything you need:
 
-| File                            | Purpose                                        |
-| ------------------------------- | ---------------------------------------------- |
-| `The Ralph Wiggum Technique.md` | Comprehensive explanation of the technique     |
-| `AGENT_PROMPT.md`               | **Ready-to-use prompt for coding agents**      |
+| File                            | Purpose                                               |
+| ------------------------------- | ----------------------------------------------------- |
+| `The Ralph Wiggum Technique.md` | Comprehensive explanation of the technique            |
+| `AGENT_PROMPT.md`               | **Ready-to-use prompt for coding agents**             |
 | `QA_AGENT_PROMPT.md`            | **Prompt for QA agent (user-perspective validation)** |
-| `INITIALIZER_PROMPT.md`         | **Prompt for first-time project setup**        |
-| `prd.json.template`             | Example feature list structure                 |
-| `ralph.sh`                      | Bash script to orchestrate the agent loop      |
-| `init.sh.template`              | Example development environment script         |
-| `EXAMPLE_OUTPUT.txt`            | **Real example of a complete Ralph iteration** |
-| `README.md`                     | This file - quick start guide                  |
+| `INITIALIZER_PROMPT.md`         | **Prompt for first-time project setup**               |
+| `prd.json.template`             | Example feature list structure                        |
+| `ralph.sh`                      | Bash script to orchestrate the agent loop             |
+| `init.sh.template`              | Example development environment script                |
+| `EXAMPLE_OUTPUT.txt`            | **Real example of a complete Ralph iteration**        |
+| `README.md`                     | This file - quick start guide                         |
 
 ## 📁 Using Ralph Across Multiple Projects
 
